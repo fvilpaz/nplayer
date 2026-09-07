@@ -331,6 +331,9 @@ if ('serviceWorker' in navigator) {
 }
 
 // ─── DIRECTORY ────────────────────────────────────────────────
+const lastFolder = localStorage.getItem('np_last_folder');
+if (lastFolder) btnReconnect.textContent = `▶ ${lastFolder}`;
+
 openDB().then(db => getDir(db)).then(async handle => {
   if (!handle) return;
   let perm = await handle.queryPermission({ mode: 'read' });
@@ -353,10 +356,10 @@ btnReconnect.addEventListener('click', async () => {
       return;
     }
   }
-  // Sin handle o permiso denegado — abrir selector
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     saveDir(handle);
+    localStorage.setItem('np_last_folder', handle.name);
     loadDirectory(handle);
     btnReconnect.style.display = 'none';
   } catch (e) {
