@@ -18,19 +18,70 @@
 }
 
 body.light {
-  --bg: #f0f2f5;
+  --bg: #fafafa;
   --surface: #ffffff;
-  --surface2: #e8eaed;
-  --surface3: #d0d3d8;
+  --surface2: #f2f2f7;
+  --surface3: #e5e5ea;
   --blue: #1793d1;
-  --blue-dim: rgba(23,147,209,0.12);
-  --text: #1a1d23;
-  --text-dim: #6b7280;
+  --blue-dim: rgba(23,147,209,0.10);
+  --text: #1c1c1e;
+  --text-dim: #8e8e93;
+  --shadow: 0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
 }
 
-body.light #bg-blur {
-  display: none;
+body.light #bg-blur { display: none; }
+
+/* App card en light */
+body.light #app {
+  background: var(--bg);
 }
+
+body.light header {
+  border-bottom: 1px solid var(--surface3);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+body.light #left-col {
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-radius: 20px;
+  margin: 12px 12px 0;
+  padding-bottom: 16px;
+}
+
+body.light #track-art {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+body.light #track-art.playing {
+  box-shadow: 0 8px 32px rgba(23,147,209,0.25), 0 2px 8px rgba(23,147,209,0.15);
+}
+
+body.light #controls {
+  background: none;
+}
+
+body.light #btn-play {
+  box-shadow: 0 4px 16px rgba(23,147,209,0.35);
+}
+
+body.light #playlist-wrap {
+  background: var(--surface);
+  border-radius: 16px;
+  margin: 8px 12px 12px;
+  box-shadow: var(--shadow);
+}
+
+body.light #search-wrap {
+  background: var(--surface2);
+  border-color: var(--surface3);
+}
+
+body.light #playlist li:hover { background: var(--surface2); }
+body.light #playlist li.active { background: var(--blue-dim); }
+body.light .folder-sep { border-color: var(--surface3); }
 
 html, body {
   height: 100%;
