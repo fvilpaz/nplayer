@@ -42,6 +42,9 @@ setVolumePct(savedVolume * 100);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'SW_UPDATED') window.location.reload();
+  });
 }
 
 // Restore last directory from IndexedDB
