@@ -36,7 +36,6 @@ body {
 #bg-blur {
   position: fixed;
   inset: 0;
-  background-image: url('nando.jpg');
   background-size: cover;
   background-position: center;
   filter: blur(60px) brightness(0.18) saturate(1.8);

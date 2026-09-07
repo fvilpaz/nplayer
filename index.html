@@ -9,12 +9,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Nando Player</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/icon.png">
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
 
-<div id="bg-blur"></div>
+<div id="bg-blur" style="background-image:url('assets/nando.jpg')"></div>
 
 <div id="app">
   <header>
@@ -26,7 +26,7 @@
   </header>
 
   <div id="now-playing">
-    <img id="track-art" src="nando.jpg" alt="cover">
+    <img id="track-art" src="assets/nando.jpg" alt="cover">
 
     <div id="track-info">
       <p id="track-title">Sin pista</p>
@@ -96,6 +96,6 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="src/app.js"></script>
 </body>
 </html>
