@@ -397,9 +397,12 @@ header h1 {
   font-size: 0.85rem;
 }
 
-/* ── HEADER siempre arriba ── */
-header {
-  grid-column: 1 / -1;
+/* ── COLS wrapper ── */
+#cols {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* ── PORTRAIT: left-col es bloque arriba, right-col abajo ── */
@@ -421,8 +424,11 @@ header {
 /* ── LANDSCAPE ── */
 @media (orientation: landscape) and (max-height: 600px) {
   #app {
-    flex-direction: row;
     max-width: 100%;
+  }
+
+  #cols {
+    flex-direction: row;
   }
 
   #left-col {
