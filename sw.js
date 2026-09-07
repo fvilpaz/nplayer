@@ -1,4 +1,4 @@
-const CACHE = 'nplayer-20260907203034';
+const CACHE = 'nplayer-20260907203155';
 const BASE = self.registration.scope;
 const ASSETS = ['', 'index.html', 'manifest.json', 'src/app.js', 'src/style.css', 'assets/icon.png', 'assets/nando.jpg'].map(f => BASE + f);
 
