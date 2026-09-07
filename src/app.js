@@ -96,6 +96,14 @@ audio.addEventListener('pause', () => {
   playlist.querySelector('li.active')?.classList.add('paused');
 });
 
+// Guardar posición cuando la app pasa a segundo plano (fiable en Android)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && currentIdx >= 0) {
+    localStorage.setItem('np_idx', currentIdx);
+    localStorage.setItem('np_pos', audio.currentTime);
+  }
+});
+
 searchInput.addEventListener('input', () => {
   const q = searchInput.value.trim();
   searchClear.style.display = q ? 'block' : 'none';
@@ -153,7 +161,9 @@ async function loadDirectory(handle) {
   const lastPos = parseFloat(localStorage.getItem('np_pos') ?? '0');
   if (lastIdx >= 0 && lastIdx < files.length) {
     await loadTrack(lastIdx, false);
-    audio.currentTime = lastPos;
+    audio.addEventListener('loadedmetadata', () => {
+      audio.currentTime = lastPos;
+    }, { once: true });
   }
 }
 
