@@ -333,13 +333,22 @@ if ('serviceWorker' in navigator) {
 // ─── DIRECTORY ────────────────────────────────────────────────
 openDB().then(db => getDir(db)).then(async handle => {
   if (!handle) return;
-  let perm = await handle.queryPermission({ mode: 'read' });
-  if (perm === 'prompt') perm = await handle.requestPermission({ mode: 'read' });
-  if (perm === 'granted') loadDirectory(handle);
-  else {
+  const perm = await handle.queryPermission({ mode: 'read' });
+  if (perm === 'granted') {
+    loadDirectory(handle);
+  } else {
     savedHandle = handle;
-    emptyMsg.textContent       = 'Carpeta guardada, pulsa para reconectar';
-    btnReconnect.style.display = 'block';
+    // Un tap en cualquier parte de la app pide el permiso
+    document.addEventListener('click', async function tryPerm() {
+      document.removeEventListener('click', tryPerm);
+      const p = await savedHandle.requestPermission({ mode: 'read' });
+      if (p === 'granted') {
+        btnReconnect.style.display = 'none';
+        loadDirectory(savedHandle);
+      }
+    }, { once: true });
+    emptyMsg.textContent       = 'Toca en cualquier parte para cargar música';
+    btnReconnect.style.display = 'none';
   }
 }).catch(() => {});
 
