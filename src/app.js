@@ -32,6 +32,7 @@ const timeTotal   = document.getElementById('time-total');
 // const trackTitle  = document.getElementById('track-title');
 // const trackIndex  = document.getElementById('track-index');
 const trackArt    = document.getElementById('track-art');
+const artInput    = document.getElementById('art-input');
 const bgBlur      = document.getElementById('bg-blur');
 const iconPlay    = document.getElementById('icon-play');
 const iconPause   = document.getElementById('icon-pause');
@@ -45,6 +46,23 @@ const emptyMsg     = document.getElementById('empty-msg');
 // --- Init ---
 audio.volume = savedVolume;
 audio.volume = savedVolume;
+
+// Custom art
+const savedArt = localStorage.getItem('np_art');
+if (savedArt) trackArt.src = savedArt;
+
+trackArt.addEventListener('click', () => artInput.click());
+artInput.addEventListener('change', () => {
+  const file = artInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    trackArt.src = e.target.result;
+    localStorage.setItem('np_art', e.target.result);
+    bgBlur.style.backgroundImage = `url('${e.target.result}')`;
+  };
+  reader.readAsDataURL(file);
+});
 
 // Theme
 const savedTheme = localStorage.getItem('np_theme') || 'dark';
