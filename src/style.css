@@ -89,13 +89,13 @@ header h1 {
 #btn-open:active { opacity: 0.7; }
 
 #track-art {
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
   border-radius: 20px;
   object-fit: cover;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
   margin-top: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   transition: box-shadow 0.3s;
 }
 
@@ -168,7 +168,7 @@ header h1 {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 12px 20px 10px;
+  padding: 6px 20px 6px;
   flex-shrink: 0;
 }
 
@@ -191,14 +191,14 @@ header h1 {
 
 #btn-prev, #btn-next {
   color: var(--text);
-  width: 44px; height: 44px;
+  width: 36px; height: 36px;
 }
 
 #btn-prev:hover, #btn-next:hover { color: #fff; }
 
 #btn-play {
-  width: 62px;
-  height: 62px;
+  width: 52px;
+  height: 52px;
   background: var(--blue);
   color: #fff;
   border-radius: 50%;
@@ -214,7 +214,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 24px 14px;
+  padding: 0 24px 8px;
   flex-shrink: 0;
 }
 
