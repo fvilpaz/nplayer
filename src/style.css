@@ -422,11 +422,11 @@ header h1 {
 
   #left-col {
     justify-content: center;
-    width: 30%;
-    min-width: 240px;
-    padding: 10px 20px;
+    width: 40%;
+    min-width: 280px;
+    padding: 12px 28px;
     border-right: 1px solid var(--surface3);
-    gap: 8px;
+    gap: 10px;
   }
 
   #track-art {
