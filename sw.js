@@ -1,5 +1,6 @@
 const CACHE = 'nplayer-v1';
-const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json', '/icon.png'];
+const BASE = self.registration.scope;
+const ASSETS = ['', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon.png', 'nando.jpg'].map(f => BASE + f);
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
