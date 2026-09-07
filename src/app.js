@@ -26,7 +26,7 @@ const btnNext     = document.getElementById('btn-next');
 const btnShuffle  = document.getElementById('btn-shuffle');
 const btnRepeat   = document.getElementById('btn-repeat');
 const progressBar = document.getElementById('progress-bar');
-const volumeBar   = document.getElementById('volume-bar');
+const volumeBar   = document.getElementById('volume-bar'); // null si está comentado en HTML
 const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
 // const trackTitle  = document.getElementById('track-title');
@@ -44,7 +44,7 @@ const emptyMsg     = document.getElementById('empty-msg');
 
 // --- Init ---
 audio.volume = savedVolume;
-setVolumePct(savedVolume * 100);
+audio.volume = savedVolume;
 
 // Theme
 const savedTheme = localStorage.getItem('np_theme') || 'dark';
@@ -167,12 +167,14 @@ progressBar.addEventListener('input', () => {
   setProgressPct(progressBar.value);
 });
 
-volumeBar.addEventListener('input', () => {
-  const vol = volumeBar.value / 100;
-  audio.volume = vol;
-  localStorage.setItem('np_vol', vol);
-  setVolumePct(volumeBar.value);
-});
+if (volumeBar) {
+  volumeBar.addEventListener('input', () => {
+    const vol = volumeBar.value / 100;
+    audio.volume = vol;
+    localStorage.setItem('np_vol', vol);
+    setVolumePct(volumeBar.value);
+  });
+}
 
 // --- Core ---
 async function scanDir(handle, path = '') {
@@ -332,6 +334,7 @@ function setProgressPct(pct) {
 }
 
 function setVolumePct(pct) {
+  if (!volumeBar) return;
   volumeBar.value = pct;
   volumeBar.style.setProperty('--pct', pct + '%');
 }
