@@ -51,9 +51,11 @@ audio.volume = savedVolume;
 const canvas = document.getElementById('visualizer');
 const ctx2d = canvas.getContext('2d');
 let audioCtx, analyser, source, vizMode = -1, vizRAF;
-// -1 = foto, 0 = barras, 1 = onda, 2 = círculo radial, 3 = partículas
-const VIZ_MODES = 4;
+// -1 = foto, 0 = barras, 1 = onda, 2 = círculo radial, 3 = partículas, 4 = matrix
+const VIZ_MODES = 5;
 let particles = [];
+const matrixChars = "アイウエオカキクケコ0101ABCDEF<>[]{}+=*~01ナニヌネハヒフヘホ";
+let matrixDrops = [];
 
 function initAudioCtx() {
   if (audioCtx) return;
@@ -149,6 +151,31 @@ function drawParticles(data, W, H) {
   });
 }
 
+function drawMatrix(data, W, H) {
+  const bass = data.slice(0, 8).reduce((a, b) => a + b, 0) / 8 / 255;
+  const fontSize = Math.max(8, Math.floor(W / 14));
+  const cols = Math.floor(W / fontSize);
+
+  if (matrixDrops.length !== cols) {
+    matrixDrops = Array.from({ length: cols }, () => -Math.floor(Math.random() * 20));
+  }
+
+  ctx2d.fillStyle = `rgba(10,10,18,${0.12 + bass * 0.1})`;
+  ctx2d.fillRect(0, 0, W, H);
+  ctx2d.font = `${fontSize}px monospace`;
+
+  for (let i = 0; i < matrixDrops.length; i++) {
+    const ch = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+    const y = matrixDrops[i] * fontSize;
+    if (Math.random() > 0.85) ctx2d.fillStyle = '#ffffff';
+    else if (i % 3 === 0) ctx2d.fillStyle = '#1793d1';
+    else ctx2d.fillStyle = '#00c896';
+    ctx2d.fillText(ch, i * fontSize, y);
+    if (y > H && Math.random() > 0.97 - bass * 0.05) matrixDrops[i] = 0;
+    matrixDrops[i] += 0.5 + bass * 2;
+  }
+}
+
 function drawViz() {
   const W = canvas.width, H = canvas.height;
   const data = new Uint8Array(analyser.frequencyBinCount);
@@ -157,6 +184,7 @@ function drawViz() {
   else if (vizMode === 1) drawWave(W, H);
   else if (vizMode === 2) drawRadial(data, W, H);
   else if (vizMode === 3) drawParticles(data, W, H);
+  else if (vizMode === 4) drawMatrix(data, W, H);
   vizRAF = requestAnimationFrame(drawViz);
 }
 
@@ -181,6 +209,7 @@ function toggleViz() {
     canvas.style.display = 'block';
     trackArt.style.display = 'none';
     particles = [];
+    matrixDrops = [];
     drawViz();
   }
 }
