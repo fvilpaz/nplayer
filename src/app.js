@@ -7,6 +7,7 @@ const DB_STORE = 'dir';
 // --- State ---
 let files = [];
 let currentIdx = -1;
+let savedHandle = null;
 let shuffle = false;
 let repeat = 'none'; // none | one | all
 let shuffleOrder = [];
@@ -31,10 +32,12 @@ const trackArt    = document.getElementById('track-art');
 const bgBlur      = document.getElementById('bg-blur');
 const iconPlay    = document.getElementById('icon-play');
 const iconPause   = document.getElementById('icon-pause');
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-const playlist    = document.getElementById('playlist');
-const emptyState  = document.getElementById('empty');
+const searchInput  = document.getElementById('search-input');
+const searchClear  = document.getElementById('search-clear');
+const playlist     = document.getElementById('playlist');
+const emptyState   = document.getElementById('empty');
+const btnReconnect = document.getElementById('btn-reconnect');
+const emptyMsg     = document.getElementById('empty-msg');
 
 // --- Init ---
 audio.volume = savedVolume;
@@ -50,13 +53,27 @@ if ('serviceWorker' in navigator) {
 // Restore last directory from IndexedDB
 openDB().then(db => getDir(db)).then(async handle => {
   if (!handle) return;
-  // En Android el permiso expira al cerrar — pedirlo de nuevo sin reseleccionar carpeta
-  let perm = await handle.queryPermission({ mode: 'read' });
-  if (perm === 'prompt') perm = await handle.requestPermission({ mode: 'read' });
-  if (perm === 'granted') loadDirectory(handle);
+  const perm = await handle.queryPermission({ mode: 'read' });
+  if (perm === 'granted') {
+    loadDirectory(handle);
+  } else {
+    // Permiso expirado — mostrar botón de reconexión (requiere gesto del usuario)
+    savedHandle = handle;
+    emptyMsg.textContent = 'Carpeta guardada, pulsa para reconectar';
+    btnReconnect.style.display = 'block';
+  }
 }).catch(() => {});
 
 // --- Events ---
+btnReconnect.addEventListener('click', async () => {
+  if (!savedHandle) return;
+  const perm = await savedHandle.requestPermission({ mode: 'read' });
+  if (perm === 'granted') {
+    btnReconnect.style.display = 'none';
+    loadDirectory(savedHandle);
+  }
+});
+
 btnOpen.addEventListener('click', async () => {
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });

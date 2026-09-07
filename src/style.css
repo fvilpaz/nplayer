@@ -374,6 +374,18 @@ header h1 {
 }
 
 /* ── EMPTY ── */
+#btn-reconnect {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
 #empty {
   display: flex;
   flex-direction: column;
