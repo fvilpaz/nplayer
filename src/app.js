@@ -331,37 +331,35 @@ if ('serviceWorker' in navigator) {
 }
 
 // ─── DIRECTORY ────────────────────────────────────────────────
-const lastFolder = localStorage.getItem('np_last_folder');
-if (lastFolder) btnReconnect.textContent = `▶ ${lastFolder}`;
-
 openDB().then(db => getDir(db)).then(async handle => {
   if (!handle) return;
-  let perm = await handle.queryPermission({ mode: 'read' });
-  if (perm === 'prompt') perm = await handle.requestPermission({ mode: 'read' });
-  if (perm === 'granted') loadDirectory(handle);
-  else {
-    savedHandle = handle;
-    emptyMsg.textContent       = 'Carpeta guardada, pulsa para reconectar';
-    btnReconnect.style.display = 'block';
+  const perm = await handle.queryPermission({ mode: 'read' });
+  if (perm === 'granted') {
+    loadDirectory(handle);
+    btnReconnect.style.display = 'none';
+    return;
   }
+  savedHandle = handle;
+  emptyMsg.textContent       = 'Pulsa Play para reanudar';
+  btnReconnect.style.display = 'block';
 }).catch(() => {});
 
 // ─── EVENTS ───────────────────────────────────────────────────
 btnReconnect.addEventListener('click', async () => {
-  if (savedHandle) {
-    const perm = await savedHandle.requestPermission({ mode: 'read' });
-    if (perm === 'granted') {
-      btnReconnect.style.display = 'none';
-      loadDirectory(savedHandle);
-      return;
-    }
-  }
   try {
-    const handle = await window.showDirectoryPicker({ mode: 'read' });
-    saveDir(handle);
-    localStorage.setItem('np_last_folder', handle.name);
-    loadDirectory(handle);
+    let handle = savedHandle;
+    if (handle) {
+      const perm = await handle.requestPermission({ mode: 'read' });
+      if (perm !== 'granted') handle = null;
+    }
+    if (!handle) {
+      handle = await window.showDirectoryPicker({ mode: 'read' });
+      saveDir(handle);
+      savedHandle = handle;
+    }
     btnReconnect.style.display = 'none';
+    await loadDirectory(handle);
+    if (files.length) loadTrack(0);
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
   }
@@ -371,6 +369,7 @@ btnOpen.addEventListener('click', async () => {
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     saveDir(handle);
+    savedHandle = handle;
     loadDirectory(handle);
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
