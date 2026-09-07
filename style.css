@@ -368,6 +368,23 @@ header h1 {
   to   { height: 14px; }
 }
 
+/* ── FOLDER SEPARATOR ── */
+#playlist li.folder-sep {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  padding: 14px 12px 6px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none !important;
+  border-bottom: 1px solid var(--surface3);
+  margin-bottom: 4px;
+}
+
 /* ── EMPTY ── */
 #empty {
   display: flex;

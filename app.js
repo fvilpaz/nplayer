@@ -118,15 +118,28 @@ volumeBar.addEventListener('input', () => {
 });
 
 // --- Core ---
-async function loadDirectory(handle) {
-  dirHandle = handle;
-  files = [];
+async function scanDir(handle, path = '') {
+  const results = [];
   for await (const entry of handle.values()) {
-    if (entry.kind === 'file' && EXTS.some(ext => entry.name.toLowerCase().endsWith(ext))) {
-      files.push(entry);
+    if (entry.kind === 'directory') {
+      const sub = await scanDir(entry, path ? `${path}/${entry.name}` : entry.name);
+      results.push(...sub);
+    } else if (entry.kind === 'file' && EXTS.some(ext => entry.name.toLowerCase().endsWith(ext))) {
+      entry._folder = path || '—';
+      results.push(entry);
     }
   }
-  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  return results;
+}
+
+async function loadDirectory(handle) {
+  dirHandle = handle;
+  files = await scanDir(handle);
+  files.sort((a, b) => {
+    const fa = a._folder.localeCompare(b._folder);
+    if (fa !== 0) return fa;
+    return a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
   if (shuffle) buildShuffleOrder();
   renderPlaylist();
   emptyState.style.display = files.length ? 'none' : 'flex';
@@ -239,7 +252,15 @@ function fmt(s) {
 
 function renderPlaylist() {
   playlist.innerHTML = '';
+  let lastFolder = null;
   files.forEach((f, i) => {
+    if (f._folder !== lastFolder) {
+      lastFolder = f._folder;
+      const sep = document.createElement('li');
+      sep.className = 'folder-sep';
+      sep.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg> ${f._folder}`;
+      playlist.appendChild(sep);
+    }
     const li = document.createElement('li');
     li.innerHTML = `
       <span class="num">${i + 1}</span>
@@ -257,10 +278,23 @@ function renderPlaylist() {
 
 function filterPlaylist(q) {
   const term = q.toLowerCase();
+  let lastSep = null;
+  let visibleUnderSep = false;
+
   playlist.querySelectorAll('li').forEach(li => {
+    if (li.classList.contains('folder-sep')) {
+      if (lastSep) lastSep.style.display = visibleUnderSep ? '' : 'none';
+      lastSep = li;
+      visibleUnderSep = false;
+      return;
+    }
     const name = li.querySelector('.name').textContent.toLowerCase();
-    li.style.display = (!term || name.includes(term)) ? '' : 'none';
+    const show = !term || name.includes(term);
+    li.style.display = show ? '' : 'none';
+    if (show) visibleUnderSep = true;
   });
+
+  if (lastSep) lastSep.style.display = visibleUnderSep ? '' : 'none';
 }
 
 function highlightPlaylistItem(idx) {
