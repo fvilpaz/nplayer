@@ -47,11 +47,69 @@ const emptyMsg     = document.getElementById('empty-msg');
 audio.volume = savedVolume;
 audio.volume = savedVolume;
 
+// Visualizer
+const canvas = document.getElementById('visualizer');
+const ctx2d = canvas.getContext('2d');
+let audioCtx, analyser, source, vizActive = false, vizRAF;
+
+function initAudioCtx() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 128;
+  source = audioCtx.createMediaElementSource(audio);
+  source.connect(analyser);
+  analyser.connect(audioCtx.destination);
+}
+
+function drawViz() {
+  const W = canvas.width, H = canvas.height;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  ctx2d.clearRect(0, 0, W, H);
+  ctx2d.fillStyle = '#0f1015';
+  ctx2d.fillRect(0, 0, W, H);
+  const bars = data.length;
+  const bw = W / bars;
+  data.forEach((v, i) => {
+    const h = (v / 255) * H;
+    const hue = 190 + (i / bars) * 60;
+    ctx2d.fillStyle = `hsl(${hue}, 80%, 55%)`;
+    ctx2d.fillRect(i * bw, H - h, bw - 1, h);
+  });
+  vizRAF = requestAnimationFrame(drawViz);
+}
+
+function toggleViz() {
+  vizActive = !vizActive;
+  if (vizActive) {
+    initAudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    canvas.width = trackArt.offsetWidth;
+    canvas.height = trackArt.offsetHeight;
+    canvas.style.display = 'block';
+    trackArt.style.display = 'none';
+    drawViz();
+  } else {
+    cancelAnimationFrame(vizRAF);
+    canvas.style.display = 'none';
+    trackArt.style.display = 'block';
+  }
+}
+
+document.getElementById('art-wrap').addEventListener('click', (e) => {
+  if (e.target.closest('#art-overlay')) return; // deja pasar al botón cámara
+  toggleViz();
+});
+
 // Custom art
 const savedArt = localStorage.getItem('np_art');
 if (savedArt) trackArt.src = savedArt;
 
-document.getElementById('art-wrap').addEventListener('click', () => artInput.click());
+document.getElementById('art-overlay').addEventListener('click', (e) => {
+  e.stopPropagation();
+  artInput.click();
+});
 artInput.addEventListener('change', () => {
   const file = artInput.files[0];
   if (!file) return;
