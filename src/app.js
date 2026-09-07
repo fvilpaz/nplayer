@@ -333,9 +333,14 @@ if ('serviceWorker' in navigator) {
 // ─── DIRECTORY ────────────────────────────────────────────────
 openDB().then(db => getDir(db)).then(async handle => {
   if (!handle) return;
-  const perm = await handle.queryPermission({ mode: 'read' });
-  if (perm === 'granted') loadDirectory(handle);
-  else {
+  let perm = await handle.queryPermission({ mode: 'read' });
+  if (perm === 'prompt') {
+    // En TWA intentar directamente sin gesto
+    try { perm = await handle.requestPermission({ mode: 'read' }); } catch {}
+  }
+  if (perm === 'granted') {
+    loadDirectory(handle);
+  } else {
     savedHandle = handle;
     emptyMsg.textContent       = 'Carpeta guardada, pulsa para reconectar';
     btnReconnect.style.display = 'block';
