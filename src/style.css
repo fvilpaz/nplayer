@@ -94,6 +94,7 @@ header h1 {
   border-radius: 20px;
   object-fit: cover;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  margin-top: 16px;
   margin-bottom: 20px;
   transition: box-shadow 0.3s;
 }
