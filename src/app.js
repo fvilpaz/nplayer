@@ -338,15 +338,10 @@ openDB().then(db => getDir(db)).then(async handle => {
     loadDirectory(handle);
   } else {
     savedHandle = handle;
-    // Un tap en cualquier parte de la app pide el permiso
-    document.addEventListener('click', async function tryPerm() {
-      document.removeEventListener('click', tryPerm);
+    document.addEventListener('touchstart', async function tryPerm() {
       const p = await savedHandle.requestPermission({ mode: 'read' });
-      if (p === 'granted') {
-        btnReconnect.style.display = 'none';
-        loadDirectory(savedHandle);
-      }
-    }, { once: true });
+      if (p === 'granted') loadDirectory(savedHandle);
+    }, { once: true, passive: true });
     emptyMsg.textContent       = 'Toca en cualquier parte para cargar música';
     btnReconnect.style.display = 'none';
   }
