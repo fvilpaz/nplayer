@@ -180,11 +180,11 @@ header h1 {
 #art-wrap:active { opacity: 0.92; }
 
 #visualizer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  display: none;
+  width: 200px;
+  height: 200px;
   border-radius: 20px;
+  object-fit: cover;
 }
 
 #art-overlay {
@@ -221,26 +221,6 @@ header h1 {
   box-shadow: 0 20px 60px rgba(23,147,209,0.35), 0 0 0 1px rgba(23,147,209,0.2);
 }
 
-#track-info {
-  text-align: center;
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-#track-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
-}
-
-#track-index {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
-}
 
 /* ── PROGRESS ── */
 #progress-wrap {
@@ -328,35 +308,6 @@ header h1 {
 #btn-play:active { transform: scale(0.93); }
 
 /* ── VOLUME ── */
-#volume-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 24px 14px;
-  flex-shrink: 0;
-}
-
-#volume-wrap svg { color: var(--text-dim); flex-shrink: 0; }
-
-#volume-bar {
-  flex: 1;
-  -webkit-appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(to right, var(--blue) var(--pct, 80%), var(--surface3) var(--pct, 80%));
-  outline: none;
-  cursor: pointer;
-}
-
-#volume-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  cursor: pointer;
-}
-
 /* ── SEARCH ── */
 #search-wrap {
   display: flex;
@@ -517,6 +468,8 @@ header h1 {
 
 /* ── DARK cards ── */
 #left-col {
+  position: relative;
+  overflow: hidden;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 20px;
@@ -595,18 +548,12 @@ header h1 {
     margin-bottom: 10px;
   }
 
-  #track-info { margin-bottom: 4px; }
-  #track-title { font-size: 0.9rem; }
-  #track-index { font-size: 0.72rem; }
-
   #progress-wrap { margin-bottom: 4px; width: 100%; }
 
   #controls { padding: 4px 0; gap: 14px; }
   #btn-play { width: 58px; height: 58px; }
   #btn-prev, #btn-next { width: 42px; height: 42px; }
   #btn-shuffle, #btn-repeat { width: 34px; height: 34px; }
-
-  #volume-wrap { padding: 0 0 4px; }
 
   header { padding: 8px 16px; }
   #playlist-wrap { margin: 0; border-radius: 0; }
