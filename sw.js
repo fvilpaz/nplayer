@@ -1,4 +1,4 @@
-const CACHE = 'nplayer-v1';
+const CACHE = 'nplayer-v2';
 const BASE = self.registration.scope;
 const ASSETS = ['', 'index.html', 'manifest.json', 'src/app.js', 'src/style.css', 'assets/icon.png', 'assets/nando.jpg'].map(f => BASE + f);
 
