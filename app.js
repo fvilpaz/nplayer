@@ -31,6 +31,8 @@ const trackArt    = document.getElementById('track-art');
 const bgBlur      = document.getElementById('bg-blur');
 const iconPlay    = document.getElementById('icon-play');
 const iconPause   = document.getElementById('icon-pause');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
 const playlist    = document.getElementById('playlist');
 const emptyState  = document.getElementById('empty');
 
@@ -88,6 +90,18 @@ audio.addEventListener('pause', () => {
   iconPause.style.display = 'none';
   trackArt.classList.remove('playing');
   playlist.querySelector('li.active')?.classList.add('paused');
+});
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  searchClear.style.display = q ? 'block' : 'none';
+  filterPlaylist(q);
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchClear.style.display = 'none';
+  filterPlaylist('');
 });
 
 progressBar.addEventListener('input', () => {
@@ -238,6 +252,14 @@ function renderPlaylist() {
     li.addEventListener('click', () => loadTrack(i));
     if (i === currentIdx) li.classList.add('active');
     playlist.appendChild(li);
+  });
+}
+
+function filterPlaylist(q) {
+  const term = q.toLowerCase();
+  playlist.querySelectorAll('li').forEach(li => {
+    const name = li.querySelector('.name').textContent.toLowerCase();
+    li.style.display = (!term || name.includes(term)) ? '' : 'none';
   });
 }
 
