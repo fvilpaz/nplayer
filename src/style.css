@@ -74,21 +74,18 @@ header h1 {
 }
 
 #btn-open {
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--surface3);
-  border-radius: 20px;
-  padding: 7px 14px;
-  font-size: 0.78rem;
-  font-weight: 500;
+  background: none;
+  color: var(--text-dim);
+  border: none;
+  border-radius: 8px;
+  padding: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: background 0.2s, border-color 0.2s;
+  transition: color 0.2s;
 }
 
-#btn-open:hover { background: var(--surface3); border-color: var(--blue); }
+#btn-open:hover { color: var(--blue); }
 #btn-open:active { opacity: 0.7; }
 
 #track-art {
