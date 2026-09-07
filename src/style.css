@@ -31,6 +31,7 @@ body.light {
 
 body.light #bg-blur { display: none; }
 
+
 /* App card en light */
 body.light #app {
   background: var(--bg);
@@ -167,24 +168,39 @@ header h1 {
 }
 #btn-theme:hover { color: var(--blue); }
 
+#art-container {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  margin-top: 10px;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #art-wrap {
   position: relative;
   cursor: pointer;
-  align-self: center;
   border-radius: 20px;
-  margin-top: 10px;
-  margin-bottom: 24px;
   overflow: hidden;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
 #art-wrap:active { opacity: 0.92; }
 
 #visualizer {
   display: none;
-  width: 200px;
-  height: 200px;
-  border-radius: 20px;
-  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 #art-overlay {
@@ -531,12 +547,16 @@ header h1 {
     gap: 10px;
   }
 
+  #art-container {
+    flex: 1;
+    min-height: 0;
+    margin: 8px 0;
+  }
+
   #art-wrap {
-    width: min(180px, 35vh);
-    height: min(180px, 35vh);
+    width: min(160px, 32vh);
+    height: min(160px, 32vh);
     border-radius: 16px;
-    margin-top: 8px;
-    margin-bottom: 8px;
   }
 
   #track-art {

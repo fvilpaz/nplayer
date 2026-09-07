@@ -30,6 +30,7 @@ const timeTotal    = document.getElementById('time-total');
 const trackArt     = document.getElementById('track-art');
 const artInput     = document.getElementById('art-input');
 const artWrap      = document.getElementById('art-wrap');
+const artContainer = document.getElementById('art-container');
 const bgBlur       = document.getElementById('bg-blur');
 const iconPlay     = document.getElementById('icon-play');
 const iconPause    = document.getElementById('icon-pause');
@@ -158,9 +159,9 @@ function drawMatrix(data, W, H) {
     matrixDrops = Array.from({ length: cols }, () => -Math.floor(Math.random() * 20));
   }
 
-  ctx2d.fillStyle = '#0a0a12';
-  ctx2d.fillRect(0, 0, W, H);
-  ctx2d.fillStyle = 'rgba(10,10,18,0.12)';
+  ctx2d.fillStyle = document.body.classList.contains('light')
+    ? 'rgba(10,10,18,0.06)'
+    : 'rgba(10,10,18,0.12)';
   ctx2d.fillRect(0, 0, W, H);
   ctx2d.font = `${fontSize}px monospace`;
 
@@ -225,21 +226,21 @@ function goToPage(page) {
   cancelAnimationFrame(vizRAF);
   if (page === -1) {
     ctx2d.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.style.display   = 'none';
-    trackArt.style.display = '';
+    canvas.style.display  = 'none';
+    artWrap.style.display = '';
+    artContainer.style.background = '';
     vizOn = false;
     return;
   }
   initAudioCtx();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   if (!vizOn) {
-    const r = trackArt.getBoundingClientRect();
-    canvas.width  = r.width  || 200;
+    const r = artContainer.getBoundingClientRect();
+    canvas.width  = r.width  || 300;
     canvas.height = r.height || 200;
-    canvas.style.width  = r.width  + 'px';
-    canvas.style.height = r.height + 'px';
-    trackArt.style.display = 'none';
-    canvas.style.display   = 'block';
+    artWrap.style.display = 'none';
+    canvas.style.display  = 'block';
+    artContainer.style.background = 'linear-gradient(135deg,#1a2a3a,#0f1520,#1a1d2e)';
   }
   vizMode     = page;
   vizOn       = true;
@@ -250,13 +251,9 @@ function goToPage(page) {
 
 window.addEventListener('resize', () => {
   if (!vizOn) return;
-  trackArt.style.display = '';
-  const r = trackArt.getBoundingClientRect();
-  trackArt.style.display = 'none';
-  canvas.width  = r.width  || 200;
+  const r = artContainer.getBoundingClientRect();
+  canvas.width  = r.width  || 300;
   canvas.height = r.height || 200;
-  canvas.style.width  = r.width  + 'px';
-  canvas.style.height = r.height + 'px';
 });
 
 // Swipe en foto y canvas — rueda: foto → anim0 → anim1 → anim2 → anim3 → foto → ...
@@ -275,7 +272,7 @@ function onSwipeEnd(x) {
   swipeStartX = null;
 }
 
-[artWrap, canvas].forEach(el => {
+[artContainer, canvas].forEach(el => {
   el.addEventListener('touchstart', e => onSwipeStart(e.touches[0].clientX), { passive: true });
   el.addEventListener('touchmove',  e => e.preventDefault(), { passive: false });
   el.addEventListener('touchend',   e => onSwipeEnd(e.changedTouches[0].clientX));
