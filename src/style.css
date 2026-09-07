@@ -168,7 +168,7 @@ header h1 {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 6px 20px 6px;
+  padding: 12px 20px 10px;
   flex-shrink: 0;
 }
 
@@ -191,14 +191,14 @@ header h1 {
 
 #btn-prev, #btn-next {
   color: var(--text);
-  width: 36px; height: 36px;
+  width: 44px; height: 44px;
 }
 
 #btn-prev:hover, #btn-next:hover { color: #fff; }
 
 #btn-play {
-  width: 52px;
-  height: 52px;
+  width: 62px;
+  height: 62px;
   background: var(--blue);
   color: #fff;
   border-radius: 50%;
@@ -214,7 +214,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 24px 8px;
+  padding: 0 24px 14px;
   flex-shrink: 0;
 }
 
