@@ -180,31 +180,19 @@ header h1 {
 
 #art-overlay {
   position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  background: rgba(0,0,0,0.45);
+  inset: auto 8px 8px auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  opacity: 0;
-  transition: opacity 0.2s;
+  opacity: 1;
 }
 
-#art-wrap:hover #art-overlay { opacity: 1; }
-
-/* En móvil: solo icono pequeño en esquina inferior derecha */
-@media (hover: none) {
-  #art-overlay {
-    inset: auto 8px 8px auto;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    opacity: 1;
-  }
-  #art-overlay svg { width: 16px; height: 16px; }
-}
+#art-overlay svg { width: 16px; height: 16px; }
 
 #track-art {
   cursor: pointer;
