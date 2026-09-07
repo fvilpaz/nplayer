@@ -422,30 +422,31 @@ header h1 {
 
   #left-col {
     justify-content: center;
-    width: 260px;
-    min-width: 260px;
-    padding: 10px 16px;
+    width: 340px;
+    min-width: 340px;
+    padding: 10px 20px;
     border-right: 1px solid var(--surface3);
-    gap: 6px;
+    gap: 8px;
   }
 
   #track-art {
-    width: 110px;
-    height: 110px;
-    border-radius: 12px;
+    width: 130px;
+    height: 130px;
+    border-radius: 14px;
     margin-top: 0;
     margin-bottom: 8px;
   }
 
   #track-info { margin-bottom: 4px; }
-  #track-title { font-size: 0.85rem; }
-  #track-index { font-size: 0.7rem; }
+  #track-title { font-size: 0.9rem; }
+  #track-index { font-size: 0.72rem; }
 
-  #progress-wrap { margin-bottom: 2px; width: 100%; }
+  #progress-wrap { margin-bottom: 4px; width: 100%; }
 
-  #controls { padding: 4px 0; gap: 10px; }
-  #btn-play { width: 50px; height: 50px; }
-  #btn-prev, #btn-next { width: 36px; height: 36px; }
+  #controls { padding: 4px 0; gap: 14px; }
+  #btn-play { width: 58px; height: 58px; }
+  #btn-prev, #btn-next { width: 42px; height: 42px; }
+  #btn-shuffle, #btn-repeat { width: 34px; height: 34px; }
 
   #volume-wrap { padding: 0 0 4px; }
 
