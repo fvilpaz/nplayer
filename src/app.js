@@ -125,7 +125,7 @@ async function scanDir(handle, path = '') {
       const sub = await scanDir(entry, path ? `${path}/${entry.name}` : entry.name);
       results.push(...sub);
     } else if (entry.kind === 'file' && EXTS.some(ext => entry.name.toLowerCase().endsWith(ext))) {
-      entry._folder = path || '—';
+      entry._folder = path || dirHandle.name;
       results.push(entry);
     }
   }
