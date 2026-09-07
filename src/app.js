@@ -71,11 +71,15 @@ function drawViz() {
   ctx2d.fillRect(0, 0, W, H);
   const bars = data.length;
   const bw = W / bars;
+  // Orden aleatorio de izquierda a derecha con simetría central
   data.forEach((v, i) => {
-    const h = (v / 255) * H;
+    const h = Math.max(4, (v / 255) * H);
     const hue = 190 + (i / bars) * 60;
-    ctx2d.fillStyle = `hsl(${hue}, 80%, 55%)`;
-    ctx2d.fillRect(i * bw, H - h, bw - 1, h);
+    const alpha = 0.7 + (v / 255) * 0.3;
+    ctx2d.fillStyle = `hsla(${hue}, 85%, 55%, ${alpha})`;
+    ctx2d.beginPath();
+    ctx2d.roundRect(i * bw + 1, H - h, bw - 2, h, 2);
+    ctx2d.fill();
   });
   vizRAF = requestAnimationFrame(drawViz);
 }
@@ -85,8 +89,9 @@ function toggleViz() {
   if (vizActive) {
     initAudioCtx();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    canvas.width = trackArt.offsetWidth;
-    canvas.height = trackArt.offsetHeight;
+    const size = trackArt.getBoundingClientRect();
+    canvas.width = size.width;
+    canvas.height = size.height;
     canvas.style.display = 'block';
     trackArt.style.display = 'none';
     drawViz();
@@ -96,6 +101,20 @@ function toggleViz() {
     trackArt.style.display = 'block';
   }
 }
+
+// Si gira la pantalla y el visualizador está activo, reajustar canvas
+window.addEventListener('resize', () => {
+  if (!vizActive) return;
+  const size = trackArt.getBoundingClientRect();
+  canvas.width = size.width;
+  canvas.height = size.height;
+});
+
+// Al cambiar a portrait ocultar canvas si estaba visible
+const orientObs = window.matchMedia('(orientation: portrait)');
+orientObs.addEventListener('change', e => {
+  if (e.matches && vizActive) toggleViz();
+});
 
 document.getElementById('art-wrap').addEventListener('click', (e) => {
   if (e.target.closest('#art-overlay')) return; // deja pasar al botón cámara
