@@ -50,7 +50,10 @@ audio.volume = savedVolume;
 // Visualizer
 const canvas = document.getElementById('visualizer');
 const ctx2d = canvas.getContext('2d');
-let audioCtx, analyser, source, vizActive = false, vizRAF;
+let audioCtx, analyser, source, vizMode = -1, vizRAF;
+// -1 = foto, 0 = barras, 1 = onda, 2 = círculo radial, 3 = partículas
+const VIZ_MODES = 4;
+let particles = [];
 
 function initAudioCtx() {
   if (audioCtx) return;
@@ -62,43 +65,123 @@ function initAudioCtx() {
   analyser.connect(audioCtx.destination);
 }
 
-function drawViz() {
-  const W = canvas.width, H = canvas.height;
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(data);
-  ctx2d.clearRect(0, 0, W, H);
+function drawBars(data, W, H) {
   ctx2d.fillStyle = '#0f1015';
   ctx2d.fillRect(0, 0, W, H);
-  const bars = data.length;
-  const bw = W / bars;
-  // Orden aleatorio de izquierda a derecha con simetría central
+  const bw = W / data.length;
   data.forEach((v, i) => {
-    const h = Math.max(4, (v / 255) * H);
-    const hue = 190 + (i / bars) * 60;
-    const alpha = 0.7 + (v / 255) * 0.3;
-    ctx2d.fillStyle = `hsla(${hue}, 85%, 55%, ${alpha})`;
+    const h = Math.max(3, (v / 255) * H);
+    const hue = 190 + (i / data.length) * 60;
+    ctx2d.fillStyle = `hsla(${hue}, 85%, 55%, ${0.7 + (v/255)*0.3})`;
     ctx2d.beginPath();
     ctx2d.roundRect(i * bw + 1, H - h, bw - 2, h, 2);
     ctx2d.fill();
   });
+}
+
+function drawWave(W, H) {
+  const td = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(td);
+  ctx2d.fillStyle = '#0f1015';
+  ctx2d.fillRect(0, 0, W, H);
+  ctx2d.lineWidth = 2.5;
+  ctx2d.strokeStyle = '#1793d1';
+  ctx2d.shadowBlur = 10;
+  ctx2d.shadowColor = '#1793d1';
+  ctx2d.beginPath();
+  td.forEach((v, i) => {
+    const x = (i / td.length) * W;
+    const y = (v / 128) * (H / 2);
+    i === 0 ? ctx2d.moveTo(x, y) : ctx2d.lineTo(x, y);
+  });
+  ctx2d.stroke();
+  ctx2d.shadowBlur = 0;
+}
+
+function drawRadial(data, W, H) {
+  ctx2d.fillStyle = '#0f1015';
+  ctx2d.fillRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2;
+  const r = Math.min(W, H) * 0.25;
+  data.forEach((v, i) => {
+    const angle = (i / data.length) * Math.PI * 2 - Math.PI / 2;
+    const len = (v / 255) * r;
+    const hue = 190 + (i / data.length) * 120;
+    ctx2d.strokeStyle = `hsl(${hue}, 85%, 55%)`;
+    ctx2d.lineWidth = 2;
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+    ctx2d.lineTo(cx + Math.cos(angle) * (r + len), cy + Math.sin(angle) * (r + len));
+    ctx2d.stroke();
+  });
+  // círculo central
+  ctx2d.strokeStyle = 'rgba(23,147,209,0.4)';
+  ctx2d.lineWidth = 1;
+  ctx2d.beginPath();
+  ctx2d.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx2d.stroke();
+}
+
+function drawParticles(data, W, H) {
+  ctx2d.fillStyle = 'rgba(15,16,21,0.2)';
+  ctx2d.fillRect(0, 0, W, H);
+  const bass = data.slice(0, 4).reduce((a, b) => a + b, 0) / 4 / 255;
+  if (bass > 0.4 && particles.length < 80) {
+    for (let i = 0; i < 3; i++) {
+      particles.push({
+        x: W / 2 + (Math.random() - 0.5) * W * 0.3,
+        y: H / 2 + (Math.random() - 0.5) * H * 0.3,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
+        life: 1,
+        hue: 190 + Math.random() * 60,
+        size: 2 + Math.random() * 4
+      });
+    }
+  }
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+    ctx2d.beginPath();
+    ctx2d.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx2d.fillStyle = `hsla(${p.hue}, 85%, 60%, ${p.life})`;
+    ctx2d.fill();
+  });
+}
+
+function drawViz() {
+  const W = canvas.width, H = canvas.height;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  if (vizMode === 0) drawBars(data, W, H);
+  else if (vizMode === 1) drawWave(W, H);
+  else if (vizMode === 2) drawRadial(data, W, H);
+  else if (vizMode === 3) drawParticles(data, W, H);
   vizRAF = requestAnimationFrame(drawViz);
 }
 
+function resizeCanvas() {
+  const size = trackArt.getBoundingClientRect();
+  canvas.width = size.width || 200;
+  canvas.height = size.height || 200;
+}
+
 function toggleViz() {
-  vizActive = !vizActive;
-  if (vizActive) {
-    initAudioCtx();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const size = trackArt.getBoundingClientRect();
-    canvas.width = size.width;
-    canvas.height = size.height;
-    canvas.style.display = 'block';
-    trackArt.style.display = 'none';
-    drawViz();
-  } else {
-    cancelAnimationFrame(vizRAF);
+  cancelAnimationFrame(vizRAF);
+  vizMode = (vizMode + 1) % (VIZ_MODES + 1); // +1 para incluir el -1 (foto)
+  if (vizMode === VIZ_MODES) vizMode = -1; // vuelve a foto
+
+  if (vizMode === -1) {
     canvas.style.display = 'none';
     trackArt.style.display = 'block';
+  } else {
+    initAudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    resizeCanvas();
+    canvas.style.display = 'block';
+    trackArt.style.display = 'none';
+    particles = [];
+    drawViz();
   }
 }
 
@@ -110,11 +193,6 @@ window.addEventListener('resize', () => {
   canvas.height = size.height;
 });
 
-// Al cambiar a portrait ocultar canvas si estaba visible
-const orientObs = window.matchMedia('(orientation: portrait)');
-orientObs.addEventListener('change', e => {
-  if (e.matches && vizActive) toggleViz();
-});
 
 document.getElementById('art-wrap').addEventListener('click', (e) => {
   if (e.target.closest('#art-overlay')) return; // deja pasar al botón cámara
