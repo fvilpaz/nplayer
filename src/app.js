@@ -45,8 +45,12 @@ if ('serviceWorker' in navigator) {
 }
 
 // Restore last directory from IndexedDB
-openDB().then(db => getDir(db)).then(handle => {
-  if (handle) loadDirectory(handle);
+openDB().then(db => getDir(db)).then(async handle => {
+  if (!handle) return;
+  // En Android el permiso expira al cerrar — pedirlo de nuevo sin reseleccionar carpeta
+  let perm = await handle.queryPermission({ mode: 'read' });
+  if (perm === 'prompt') perm = await handle.requestPermission({ mode: 'read' });
+  if (perm === 'granted') loadDirectory(handle);
 }).catch(() => {});
 
 // --- Events ---
