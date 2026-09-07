@@ -166,24 +166,57 @@ async function scanDir(handle, path = '') {
 
 async function loadDirectory(handle) {
   dirHandle = handle;
-  files = await scanDir(handle);
-  files.sort((a, b) => {
-    const fa = a._folder.localeCompare(b._folder);
-    if (fa !== 0) return fa;
-    return a.name.localeCompare(b.name, undefined, { numeric: true });
-  });
-  if (shuffle) buildShuffleOrder();
-  renderPlaylist();
-  emptyState.style.display = files.length ? 'none' : 'flex';
-  playlist.style.display = files.length ? 'block' : 'none';
+  files = [];
+  emptyState.style.display = 'none';
+  playlist.style.display = 'block';
+  playlist.innerHTML = '<li style="color:var(--text-dim);padding:12px;font-size:0.85rem">Cargando música...</li>';
 
   const lastIdx = parseInt(localStorage.getItem('np_idx') ?? '-1');
   const lastPos = parseFloat(localStorage.getItem('np_pos') ?? '0');
-  if (lastIdx >= 0 && lastIdx < files.length) {
+  let trackLoaded = false;
+
+  // Escanear carpeta raíz primero para mostrar algo rápido
+  for await (const entry of handle.values()) {
+    if (entry.kind === 'file' && EXTS.some(ext => entry.name.toLowerCase().endsWith(ext))) {
+      entry._folder = handle.name;
+      files.push(entry);
+    }
+  }
+
+  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  renderPlaylist();
+
+  // Cargar última canción en cuanto tengamos algo
+  if (!trackLoaded && lastIdx >= 0 && lastIdx < files.length) {
+    trackLoaded = true;
     await loadTrack(lastIdx, false);
-    audio.addEventListener('loadedmetadata', () => {
-      audio.currentTime = lastPos;
-    }, { once: true });
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
+  }
+
+  // Luego escanear subcarpetas en segundo plano
+  for await (const entry of handle.values()) {
+    if (entry.kind === 'directory') {
+      const sub = await scanDir(entry, entry.name);
+      files.push(...sub);
+      files.sort((a, b) => {
+        const fa = a._folder.localeCompare(b._folder);
+        if (fa !== 0) return fa;
+        return a.name.localeCompare(b.name, undefined, { numeric: true });
+      });
+      renderPlaylist();
+      if (shuffle) buildShuffleOrder();
+
+      if (!trackLoaded && lastIdx >= 0 && lastIdx < files.length) {
+        trackLoaded = true;
+        await loadTrack(lastIdx, false);
+        audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
+      }
+    }
+  }
+
+  if (!trackLoaded && lastIdx < 0) {
+    emptyState.style.display = files.length ? 'none' : 'flex';
+    if (!files.length) playlist.style.display = 'none';
   }
 }
 
