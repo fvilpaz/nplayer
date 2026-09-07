@@ -542,11 +542,11 @@ header h1 {
   }
 
   #track-art {
-    width: 130px;
-    height: 130px;
-    border-radius: 14px;
+    width: min(180px, 38vw);
+    height: min(180px, 38vw);
+    border-radius: 16px;
     margin-top: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   #track-info { margin-bottom: 4px; }
