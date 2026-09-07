@@ -17,6 +17,9 @@ let savedVolume = parseFloat(localStorage.getItem('np_vol') ?? '0.8');
 
 // --- DOM ---
 const btnOpen     = document.getElementById('btn-open');
+const btnTheme    = document.getElementById('btn-theme');
+const iconMoon    = document.getElementById('icon-moon');
+const iconSun     = document.getElementById('icon-sun');
 const btnPlay     = document.getElementById('btn-play');
 const btnPrev     = document.getElementById('btn-prev');
 const btnNext     = document.getElementById('btn-next');
@@ -42,6 +45,28 @@ const emptyMsg     = document.getElementById('empty-msg');
 // --- Init ---
 audio.volume = savedVolume;
 setVolumePct(savedVolume * 100);
+
+// Theme
+const savedTheme = localStorage.getItem('np_theme') || 'dark';
+if (savedTheme === 'light') applyLight();
+
+btnTheme.addEventListener('click', () => {
+  if (document.body.classList.contains('light')) {
+    document.body.classList.remove('light');
+    iconMoon.style.display = 'block';
+    iconSun.style.display = 'none';
+    localStorage.setItem('np_theme', 'dark');
+  } else {
+    applyLight();
+    localStorage.setItem('np_theme', 'light');
+  }
+});
+
+function applyLight() {
+  document.body.classList.add('light');
+  iconMoon.style.display = 'none';
+  iconSun.style.display = 'block';
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

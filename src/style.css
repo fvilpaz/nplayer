@@ -17,6 +17,17 @@
   --radius: 16px;
 }
 
+body.light {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface2: #e8eaed;
+  --surface3: #d0d3d8;
+  --blue: #1793d1;
+  --blue-dim: rgba(23,147,209,0.12);
+  --text: #1a1d23;
+  --text-dim: #6b7280;
+}
+
 html, body {
   height: 100%;
   height: 100dvh;
@@ -87,6 +98,19 @@ header h1 {
 
 #btn-open:hover { color: var(--blue); }
 #btn-open:active { opacity: 0.7; }
+
+#btn-theme {
+  background: none;
+  color: var(--text-dim);
+  border: none;
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+#btn-theme:hover { color: var(--blue); }
 
 #track-art {
   width: 200px;
