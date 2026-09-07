@@ -27,6 +27,10 @@ const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
 const trackTitle  = document.getElementById('track-title');
 const trackIndex  = document.getElementById('track-index');
+const trackArt    = document.getElementById('track-art');
+const bgBlur      = document.getElementById('bg-blur');
+const iconPlay    = document.getElementById('icon-play');
+const iconPause   = document.getElementById('icon-pause');
 const playlist    = document.getElementById('playlist');
 const emptyState  = document.getElementById('empty');
 
@@ -67,14 +71,24 @@ btnShuffle.addEventListener('click', () => {
 btnRepeat.addEventListener('click', () => {
   const modes = ['none', 'all', 'one'];
   repeat = modes[(modes.indexOf(repeat) + 1) % modes.length];
-  btnRepeat.textContent = repeat === 'one' ? '🔂' : '🔁';
   btnRepeat.classList.toggle('active', repeat !== 'none');
+  btnRepeat.title = repeat === 'one' ? 'Repetir una' : repeat === 'all' ? 'Repetir todo' : 'Sin repetir';
 });
 
 audio.addEventListener('timeupdate', onTimeUpdate);
 audio.addEventListener('ended', onEnded);
-audio.addEventListener('play', () => { btnPlay.textContent = '⏸'; });
-audio.addEventListener('pause', () => { btnPlay.textContent = '▶'; });
+audio.addEventListener('play', () => {
+  iconPlay.style.display = 'none';
+  iconPause.style.display = 'block';
+  trackArt.classList.add('playing');
+  playlist.querySelector('li.active')?.classList.remove('paused');
+});
+audio.addEventListener('pause', () => {
+  iconPlay.style.display = 'block';
+  iconPause.style.display = 'none';
+  trackArt.classList.remove('playing');
+  playlist.querySelector('li.active')?.classList.add('paused');
+});
 
 progressBar.addEventListener('input', () => {
   const pct = progressBar.value / 100;
@@ -102,6 +116,7 @@ async function loadDirectory(handle) {
   if (shuffle) buildShuffleOrder();
   renderPlaylist();
   emptyState.style.display = files.length ? 'none' : 'flex';
+  playlist.style.display = files.length ? 'block' : 'none';
 
   const lastIdx = parseInt(localStorage.getItem('np_idx') ?? '-1');
   const lastPos = parseFloat(localStorage.getItem('np_pos') ?? '0');
@@ -121,8 +136,10 @@ async function loadTrack(idx, autoplay = true) {
   audio.src = url;
   audio.load();
 
-  trackTitle.textContent = entry.name.replace(/\.[^.]+$/, '');
+  const name = entry.name.replace(/\.[^.]+$/, '');
+  trackTitle.textContent = name;
   trackIndex.textContent = `${idx + 1} / ${files.length}`;
+  document.title = `${name} — Nando Player`;
 
   highlightPlaylistItem(idx);
   localStorage.setItem('np_idx', idx);
@@ -210,7 +227,14 @@ function renderPlaylist() {
   playlist.innerHTML = '';
   files.forEach((f, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<span class="num">${i + 1}</span><span class="name">${f.name.replace(/\.[^.]+$/, '')}</span>`;
+    li.innerHTML = `
+      <span class="num">${i + 1}</span>
+      <span class="name">${f.name.replace(/\.[^.]+$/, '')}</span>
+      <span class="eq">
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+      </span>`;
     li.addEventListener('click', () => loadTrack(i));
     if (i === currentIdx) li.classList.add('active');
     playlist.appendChild(li);
