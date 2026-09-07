@@ -422,8 +422,8 @@ header h1 {
 
   #left-col {
     justify-content: center;
-    width: 340px;
-    min-width: 340px;
+    width: 30%;
+    min-width: 240px;
     padding: 10px 20px;
     border-right: 1px solid var(--surface3);
     gap: 8px;
