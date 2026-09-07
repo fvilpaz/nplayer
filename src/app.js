@@ -345,11 +345,22 @@ openDB().then(db => getDir(db)).then(async handle => {
 
 // ─── EVENTS ───────────────────────────────────────────────────
 btnReconnect.addEventListener('click', async () => {
-  if (!savedHandle) return;
-  const perm = await savedHandle.requestPermission({ mode: 'read' });
-  if (perm === 'granted') {
+  if (savedHandle) {
+    const perm = await savedHandle.requestPermission({ mode: 'read' });
+    if (perm === 'granted') {
+      btnReconnect.style.display = 'none';
+      loadDirectory(savedHandle);
+      return;
+    }
+  }
+  // Sin handle o permiso denegado — abrir selector
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'read' });
+    saveDir(handle);
+    loadDirectory(handle);
     btnReconnect.style.display = 'none';
-    loadDirectory(savedHandle);
+  } catch (e) {
+    if (e.name !== 'AbortError') console.error(e);
   }
 });
 
