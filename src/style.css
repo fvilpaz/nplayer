@@ -167,17 +167,51 @@ header h1 {
 }
 #btn-theme:hover { color: var(--blue); }
 
+#art-wrap {
+  position: relative;
+  cursor: pointer;
+  align-self: center;
+  border-radius: 20px;
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+
+#art-wrap:active { opacity: 0.85; }
+
+#art-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#art-wrap:hover #art-overlay { opacity: 1; }
+
+/* En móvil siempre visible pero sutil */
+@media (hover: none) {
+  #art-overlay {
+    opacity: 1;
+    background: rgba(0,0,0,0.25);
+  }
+}
+
 #track-art {
   cursor: pointer;
+  display: block;
   width: 200px;
   height: 200px;
   border-radius: 20px;
   object-fit: cover;
   object-position: center;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
-  margin-top: 10px;
-  margin-bottom: 24px;
-  align-self: center;
+  margin-top: 0;
+  margin-bottom: 0;
   transition: box-shadow 0.3s;
 }
 

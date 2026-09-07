@@ -51,7 +51,7 @@ audio.volume = savedVolume;
 const savedArt = localStorage.getItem('np_art');
 if (savedArt) trackArt.src = savedArt;
 
-trackArt.addEventListener('click', () => artInput.click());
+document.getElementById('art-wrap').addEventListener('click', () => artInput.click());
 artInput.addEventListener('change', () => {
   const file = artInput.files[0];
   if (!file) return;
