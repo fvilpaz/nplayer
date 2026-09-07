@@ -26,8 +26,6 @@ const progressBar = document.getElementById('progress-bar');
 const volumeBar   = document.getElementById('volume-bar');
 const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
-const trackTitle  = document.getElementById('track-title');
-const trackIndex  = document.getElementById('track-index');
 const trackArt    = document.getElementById('track-art');
 const bgBlur      = document.getElementById('bg-blur');
 const iconPlay    = document.getElementById('icon-play');
@@ -198,8 +196,6 @@ async function loadTrack(idx, autoplay = true) {
   audio.load();
 
   const name = entry.name.replace(/\.[^.]+$/, '');
-  trackTitle.textContent = name;
-  trackIndex.textContent = `${idx + 1} / ${files.length}`;
   document.title = `${name} — Nando Player`;
 
   highlightPlaylistItem(idx);
