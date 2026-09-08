@@ -374,7 +374,36 @@ openDB().then(db => getDir(db)).then(async handle => {
 }).catch(() => {});
 
 // ─── EVENTS ───────────────────────────────────────────────────
+// Fallback: selector de carpeta para navegadores sin showDirectoryPicker (qutebrowser, firefox)
+const dirInput = document.createElement('input');
+dirInput.type = 'file';
+dirInput.webkitdirectory = true;
+dirInput.style.display = 'none';
+document.body.appendChild(dirInput);
+dirInput.addEventListener('change', () => {
+  files = [...dirInput.files]
+    .filter(f => EXTS.some(ext => f.name.toLowerCase().endsWith(ext)))
+    .map(f => {
+      const parts = (f.webkitRelativePath || f.name).split('/');
+      parts.pop();
+      return { name: f.name, _folder: parts.join('/') || 'Música', getFile: () => f };
+    });
+  files.sort((a, b) => {
+    const fa = a._folder.localeCompare(b._folder, undefined, { numeric: true });
+    return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
+  renderPlaylist();
+  emptyState.style.display = files.length ? 'none' : 'flex';
+  playlist.style.display   = files.length ? 'block' : 'none';
+  if (files.length) loadTrack(0);
+});
+function openDirPickerFallback() {
+  dirInput.value = '';
+  dirInput.click();
+}
+
 btnReconnect.addEventListener('click', async () => {
+  if (typeof window.showDirectoryPicker !== 'function') { openDirPickerFallback(); return; }
   try {
     let handle = savedHandle;
     if (handle) {
@@ -395,6 +424,7 @@ btnReconnect.addEventListener('click', async () => {
 });
 
 btnOpen.addEventListener('click', async () => {
+  if (typeof window.showDirectoryPicker !== 'function') { openDirPickerFallback(); return; }
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     saveDir(handle);
