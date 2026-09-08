@@ -160,18 +160,14 @@ function drawMatrix(data, W, H) {
   }
 
   const isLight = document.body.classList.contains('light');
-  if (isLight) {
-    ctx2d.clearRect(0, 0, W, H);
-  } else {
-    ctx2d.fillStyle = 'rgba(10,10,18,0.12)';
-    ctx2d.fillRect(0, 0, W, H);
-  }
+  ctx2d.fillStyle = isLight ? 'rgba(232,234,237,0.15)' : 'rgba(10,10,18,0.12)';
+  ctx2d.fillRect(0, 0, W, H);
   ctx2d.font = `${fontSize}px monospace`;
 
   for (let i = 0; i < matrixDrops.length; i++) {
     const ch    = matrixChars[Math.floor(Math.random() * matrixChars.length)];
     const y     = matrixDrops[i] * fontSize;
-    const alpha = 0.3 + Math.random() * 0.4;
+    const alpha = isLight ? 0.6 + Math.random() * 0.4 : 0.3 + Math.random() * 0.4;
     if (isLight) {
       if (Math.random() > 0.9)   ctx2d.fillStyle = `rgba(23,147,209,${alpha + 0.3})`;
       else if (i % 3 === 0)      ctx2d.fillStyle = `rgba(10,80,120,${alpha + 0.3})`;
