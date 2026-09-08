@@ -1,4 +1,4 @@
-const CACHE = 'nplayer-20260908041026';
+const CACHE = 'nplayer-20260908041555';
 const BASE = self.registration.scope;
 const ASSETS = ['', 'index.html', 'manifest.json', 'src/app.js', 'src/style.css', 'assets/icon.png', 'assets/nando_1.png'].map(f => BASE + f);
 
@@ -17,12 +17,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // HTML siempre desde red para coger cambios, resto desde caché
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+  // Red primero siempre (evita versiones viejas en caché); caché solo si no hay red
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
 });
