@@ -240,7 +240,9 @@ function goToPage(page) {
     canvas.height = r.height || 200;
     artWrap.style.display = 'none';
     canvas.style.display  = 'block';
-    artContainer.style.background = 'linear-gradient(135deg,#1a2a3a,#0f1520,#1a1d2e)';
+    artContainer.style.background = document.body.classList.contains('light')
+      ? 'linear-gradient(135deg,#e8eaed,#f2f2f7,#e0e4ea)'
+      : 'linear-gradient(135deg,#1a2a3a,#0f1520,#1a1d2e)';
   }
   vizMode     = page;
   vizOn       = true;
