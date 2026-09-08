@@ -304,7 +304,7 @@ header h1 {
 .ctrl-btn svg { display: block; }
 
 #btn-prev, #btn-next {
-  color: var(--text);
+  color: var(--text-dim);
   width: 44px; height: 44px;
 }
 
