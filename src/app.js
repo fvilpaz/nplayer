@@ -578,8 +578,8 @@ async function loadTrack(idx, autoplay = true) {
   const entry = files[idx];
   let url;
   if (entry._native) {
-    // URI nativa directamente — WebView Android la soporta sin base64
-    url = entry.uri;
+    // Proxy local: MainActivity intercepta /audio/ y sirve el content://
+    url = 'https://localhost/audio/' + encodeURIComponent(entry.uri);
   } else {
     const file = await entry.getFile();
     url = URL.createObjectURL(file);
