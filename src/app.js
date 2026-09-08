@@ -578,18 +578,13 @@ async function loadTrack(idx, autoplay = true) {
   const entry = files[idx];
   let url;
   if (entry._native) {
-    const { Folder } = window.Capacitor.Plugins;
-    const { data, mimeType } = await Folder.readFileAsBase64({ uri: entry.uri });
-    const bin = atob(data);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    const blob = new Blob([arr], { type: mimeType || 'audio/mpeg' });
-    url = URL.createObjectURL(blob);
+    // URI nativa directamente — WebView Android la soporta sin base64
+    url = entry.uri;
   } else {
     const file = await entry.getFile();
     url = URL.createObjectURL(file);
   }
-  if (audio.src) URL.revokeObjectURL(audio.src);
+  if (audio.src && !audio.src.startsWith('content://')) URL.revokeObjectURL(audio.src);
   audio.src = url;
   audio.load();
   document.title = `${entry.name.replace(/\.[^.]+$/, '')} — Nando Player`;
