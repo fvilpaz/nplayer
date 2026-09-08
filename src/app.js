@@ -368,6 +368,14 @@ openDB().then(db => getDir(db)).then(async handle => {
 
 // ─── EVENTS ───────────────────────────────────────────────────
 btnReconnect.addEventListener('click', async () => {
+  if (window.Capacitor?.isNativePlatform()) {
+    try {
+      const { uri } = await window.Capacitor.Plugins.Folder.pickFolder();
+      localStorage.setItem('np_native_uri', uri);
+      await loadNativeFolder(uri);
+    } catch (e) { console.error(e); }
+    return;
+  }
   try {
     let handle = savedHandle;
     if (handle) {
@@ -444,7 +452,7 @@ audio.addEventListener('pause', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && currentIdx >= 0) {
     localStorage.setItem('np_idx', currentIdx);
-    localStorage.setItem('np_pos', audio.currentTime);
+localStorage.setItem(files[currentIdx]?._native ? 'np_native_pos' : 'np_pos', audio.currentTime);
   }
 });
 
@@ -470,9 +478,22 @@ progressBar.addEventListener('input', () => {
 async function loadNativeFolder(uri) {
   const { Folder } = window.Capacitor.Plugins;
   const { files: nativeFiles } = await Folder.listFiles({ uri });
-  files = nativeFiles.map(f => ({ ...f, _folder: uri, _native: true }));
-  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  files = nativeFiles.map(f => ({ ...f, _folder: f.folder || 'Música', _native: true }));
+  files.sort((a, b) => {
+    const fa = a._folder.localeCompare(b._folder, undefined, { numeric: true });
+    return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
   renderPlaylist();
+
+  const lastIdx = parseInt(localStorage.getItem('np_native_idx') ?? '-1');
+  const lastPos = parseFloat(localStorage.getItem('np_native_pos') ?? '0');
+  if (lastIdx >= 0 && lastIdx < files.length) {
+    await loadTrack(lastIdx, false);
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
+  } else if (files.length) {
+    loadTrack(0);
+  }
+
   emptyState.style.display = files.length ? 'none' : 'flex';
   playlist.style.display   = files.length ? 'block' : 'none';
 }
@@ -557,13 +578,12 @@ async function loadTrack(idx, autoplay = true) {
   const entry = files[idx];
   let url;
   if (entry._native) {
-    // Capacitor — leer como base64 y crear blob
     const { Folder } = window.Capacitor.Plugins;
-    const { data } = await Folder.readFileAsBase64({ uri: entry.uri });
+    const { data, mimeType } = await Folder.readFileAsBase64({ uri: entry.uri });
     const bin = atob(data);
     const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    const blob = new Blob([arr], { type: 'audio/mpeg' });
+    const blob = new Blob([arr], { type: mimeType || 'audio/mpeg' });
     url = URL.createObjectURL(blob);
   } else {
     const file = await entry.getFile();
@@ -574,7 +594,7 @@ async function loadTrack(idx, autoplay = true) {
   audio.load();
   document.title = `${entry.name.replace(/\.[^.]+$/, '')} — Nando Player`;
   highlightPlaylistItem(idx);
-  localStorage.setItem('np_idx', idx);
+  localStorage.setItem(entry._native ? 'np_native_idx' : 'np_idx', idx);
   if (autoplay) audio.play();
 }
 
@@ -684,8 +704,14 @@ function filterPlaylist(q) {
 }
 
 function highlightPlaylistItem(idx) {
-  playlist.querySelectorAll('li').forEach((li, i) => li.classList.toggle('active', i === idx));
-  playlist.children[idx]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  let k = -1;
+  [...playlist.children].forEach(li => {
+    if (li.classList.contains('folder-sep')) return;
+    k++;
+    li.classList.toggle('active', k === idx);
+  });
+  [...playlist.children].filter(li => !li.classList.contains('folder-sep'))[idx]
+    ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 // ─── INDEXEDDB ────────────────────────────────────────────────
