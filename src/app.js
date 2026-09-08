@@ -368,14 +368,6 @@ openDB().then(db => getDir(db)).then(async handle => {
 
 // ─── EVENTS ───────────────────────────────────────────────────
 btnReconnect.addEventListener('click', async () => {
-  if (window.Capacitor?.isNativePlatform()) {
-    try {
-      const { uri } = await window.Capacitor.Plugins.Folder.pickFolder();
-      localStorage.setItem('np_native_uri', uri);
-      await loadNativeFolder(uri);
-    } catch (e) { console.error(e); }
-    return;
-  }
   try {
     let handle = savedHandle;
     if (handle) {
@@ -396,15 +388,6 @@ btnReconnect.addEventListener('click', async () => {
 });
 
 btnOpen.addEventListener('click', async () => {
-  if (window.Capacitor?.isNativePlatform()) {
-    try {
-      const { Folder } = window.Capacitor.Plugins;
-      const { uri } = await Folder.pickFolder();
-      localStorage.setItem('np_native_uri', uri);
-      await loadNativeFolder(uri);
-    } catch (e) { console.error(e); }
-    return;
-  }
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     saveDir(handle);
@@ -452,7 +435,7 @@ audio.addEventListener('pause', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && currentIdx >= 0) {
     localStorage.setItem('np_idx', currentIdx);
-localStorage.setItem(files[currentIdx]?._native ? 'np_native_pos' : 'np_pos', audio.currentTime);
+    localStorage.setItem('np_pos', audio.currentTime);
   }
 });
 
@@ -473,40 +456,6 @@ progressBar.addEventListener('input', () => {
   audio.currentTime = audio.duration * pct;
   setProgressPct(progressBar.value);
 });
-
-// ─── CAPACITOR NATIVE ─────────────────────────────────────────
-async function loadNativeFolder(uri) {
-  const { Folder } = window.Capacitor.Plugins;
-  const { files: nativeFiles } = await Folder.listFiles({ uri });
-  files = nativeFiles.map(f => ({ ...f, _folder: f.folder || 'Música', _native: true }));
-  files.sort((a, b) => {
-    const fa = a._folder.localeCompare(b._folder, undefined, { numeric: true });
-    return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
-  });
-  renderPlaylist();
-
-  const lastIdx = parseInt(localStorage.getItem('np_native_idx') ?? '-1');
-  const lastPos = parseFloat(localStorage.getItem('np_native_pos') ?? '0');
-  if (lastIdx >= 0 && lastIdx < files.length) {
-    await loadTrack(lastIdx, false);
-    audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
-  } else if (files.length) {
-    loadTrack(0);
-  }
-
-  emptyState.style.display = files.length ? 'none' : 'flex';
-  playlist.style.display   = files.length ? 'block' : 'none';
-}
-
-// Al arrancar en Capacitor, recuperar carpeta guardada
-if (window.Capacitor?.isNativePlatform()) {
-  const savedUri = localStorage.getItem('np_native_uri');
-  if (savedUri) {
-    window.Capacitor.Plugins.Folder.pickFolder()
-      .then(({ uri }) => loadNativeFolder(uri))
-      .catch(() => {});
-  }
-}
 
 // ─── CORE ─────────────────────────────────────────────────────
 async function scanDir(handle, path = '') {
@@ -576,20 +525,14 @@ async function loadDirectory(handle) {
 async function loadTrack(idx, autoplay = true) {
   currentIdx = idx;
   const entry = files[idx];
-  let url;
-  if (entry._native) {
-    // Proxy local: MainActivity intercepta /audio/ y sirve el content://
-    url = 'https://localhost/audio/' + encodeURIComponent(entry.uri);
-  } else {
-    const file = await entry.getFile();
-    url = URL.createObjectURL(file);
-  }
-  if (audio.src && !audio.src.startsWith('content://')) URL.revokeObjectURL(audio.src);
+  const file  = await entry.getFile();
+  const url   = URL.createObjectURL(file);
+  if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = url;
   audio.load();
   document.title = `${entry.name.replace(/\.[^.]+$/, '')} — Nando Player`;
   highlightPlaylistItem(idx);
-  localStorage.setItem(entry._native ? 'np_native_idx' : 'np_idx', idx);
+  localStorage.setItem('np_idx', idx);
   if (autoplay) audio.play();
 }
 
@@ -699,14 +642,8 @@ function filterPlaylist(q) {
 }
 
 function highlightPlaylistItem(idx) {
-  let k = -1;
-  [...playlist.children].forEach(li => {
-    if (li.classList.contains('folder-sep')) return;
-    k++;
-    li.classList.toggle('active', k === idx);
-  });
-  [...playlist.children].filter(li => !li.classList.contains('folder-sep'))[idx]
-    ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  playlist.querySelectorAll('li').forEach((li, i) => li.classList.toggle('active', i === idx));
+  playlist.children[idx]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 // ─── INDEXEDDB ────────────────────────────────────────────────
