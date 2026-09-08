@@ -388,6 +388,15 @@ btnReconnect.addEventListener('click', async () => {
 });
 
 btnOpen.addEventListener('click', async () => {
+  if (window.Capacitor?.isNativePlatform()) {
+    try {
+      const { Folder } = window.Capacitor.Plugins;
+      const { uri } = await Folder.pickFolder();
+      localStorage.setItem('np_native_uri', uri);
+      await loadNativeFolder(uri);
+    } catch (e) { console.error(e); }
+    return;
+  }
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     saveDir(handle);
@@ -457,6 +466,27 @@ progressBar.addEventListener('input', () => {
   setProgressPct(progressBar.value);
 });
 
+// ─── CAPACITOR NATIVE ─────────────────────────────────────────
+async function loadNativeFolder(uri) {
+  const { Folder } = window.Capacitor.Plugins;
+  const { files: nativeFiles } = await Folder.listFiles({ uri });
+  files = nativeFiles.map(f => ({ ...f, _folder: uri, _native: true }));
+  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  renderPlaylist();
+  emptyState.style.display = files.length ? 'none' : 'flex';
+  playlist.style.display   = files.length ? 'block' : 'none';
+}
+
+// Al arrancar en Capacitor, recuperar carpeta guardada
+if (window.Capacitor?.isNativePlatform()) {
+  const savedUri = localStorage.getItem('np_native_uri');
+  if (savedUri) {
+    window.Capacitor.Plugins.Folder.pickFolder()
+      .then(({ uri }) => loadNativeFolder(uri))
+      .catch(() => {});
+  }
+}
+
 // ─── CORE ─────────────────────────────────────────────────────
 async function scanDir(handle, path = '') {
   const results = [];
@@ -525,8 +555,20 @@ async function loadDirectory(handle) {
 async function loadTrack(idx, autoplay = true) {
   currentIdx = idx;
   const entry = files[idx];
-  const file  = await entry.getFile();
-  const url   = URL.createObjectURL(file);
+  let url;
+  if (entry._native) {
+    // Capacitor — leer como base64 y crear blob
+    const { Folder } = window.Capacitor.Plugins;
+    const { data } = await Folder.readFileAsBase64({ uri: entry.uri });
+    const bin = atob(data);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const blob = new Blob([arr], { type: 'audio/mpeg' });
+    url = URL.createObjectURL(blob);
+  } else {
+    const file = await entry.getFile();
+    url = URL.createObjectURL(file);
+  }
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = url;
   audio.load();
