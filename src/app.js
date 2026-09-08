@@ -159,19 +159,28 @@ function drawMatrix(data, W, H) {
     matrixDrops = Array.from({ length: cols }, () => -Math.floor(Math.random() * 20));
   }
 
-  ctx2d.fillStyle = document.body.classList.contains('light')
-    ? 'rgba(10,10,18,0.06)'
-    : 'rgba(10,10,18,0.12)';
-  ctx2d.fillRect(0, 0, W, H);
+  const isLight = document.body.classList.contains('light');
+  if (isLight) {
+    ctx2d.clearRect(0, 0, W, H);
+  } else {
+    ctx2d.fillStyle = 'rgba(10,10,18,0.12)';
+    ctx2d.fillRect(0, 0, W, H);
+  }
   ctx2d.font = `${fontSize}px monospace`;
 
   for (let i = 0; i < matrixDrops.length; i++) {
     const ch    = matrixChars[Math.floor(Math.random() * matrixChars.length)];
     const y     = matrixDrops[i] * fontSize;
     const alpha = 0.3 + Math.random() * 0.4;
-    if (Math.random() > 0.9)   ctx2d.fillStyle = `rgba(255,255,255,${alpha})`;
-    else if (i % 3 === 0)      ctx2d.fillStyle = `rgba(23,147,209,${alpha})`;
-    else                        ctx2d.fillStyle = `rgba(0,200,150,${alpha})`;
+    if (isLight) {
+      if (Math.random() > 0.9)   ctx2d.fillStyle = `rgba(23,147,209,${alpha + 0.3})`;
+      else if (i % 3 === 0)      ctx2d.fillStyle = `rgba(10,80,120,${alpha + 0.3})`;
+      else                        ctx2d.fillStyle = `rgba(0,120,80,${alpha + 0.3})`;
+    } else {
+      if (Math.random() > 0.9)   ctx2d.fillStyle = `rgba(255,255,255,${alpha})`;
+      else if (i % 3 === 0)      ctx2d.fillStyle = `rgba(23,147,209,${alpha})`;
+      else                        ctx2d.fillStyle = `rgba(0,200,150,${alpha})`;
+    }
     ctx2d.fillText(ch, i * fontSize, y);
     if (y > H && Math.random() > 0.97 - bass * 0.03) matrixDrops[i] = 0;
     matrixDrops[i] += 0.25 + bass * 0.5;
