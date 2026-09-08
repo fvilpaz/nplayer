@@ -301,6 +301,28 @@ artInput.addEventListener('change', () => {
   reader.readAsDataURL(file);
 });
 
+// ─── APP TITLE ────────────────────────────────────────────────
+const appTitle = document.getElementById('app-title');
+const savedTitle = localStorage.getItem('np_title');
+if (savedTitle) appTitle.textContent = savedTitle;
+
+appTitle.addEventListener('dblclick', () => {
+  const input = document.createElement('input');
+  input.value = appTitle.textContent;
+  input.style.cssText = 'background:none;border:none;border-bottom:2px solid var(--blue);color:var(--blue);font:inherit;font-size:1rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;outline:none;width:100%;';
+  appTitle.replaceWith(input);
+  input.focus();
+  input.select();
+  const done = () => {
+    const val = input.value.trim() || 'Nando Player';
+    appTitle.textContent = val;
+    localStorage.setItem('np_title', val);
+    input.replaceWith(appTitle);
+  };
+  input.addEventListener('blur', done);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+});
+
 // ─── THEME ────────────────────────────────────────────────────
 if (localStorage.getItem('np_theme') === 'light') applyLight();
 
