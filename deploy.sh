@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+# Sella sw.js con la hora del despliegue: es lo que hace que el móvil detecte la versión nueva.
+# Funciona desde cualquier clon (no depende de ningún marcador que haya que restaurar).
 BUILD=$(date +%Y%m%d%H%M%S)
-sed -i "s/__BUILDTIME__/$BUILD/" sw.js
+sed -i "s/^const CACHE = .*/const CACHE = 'nplayer-$BUILD';/" sw.js
 
 git add -A
 git commit -m "deploy: $BUILD"
 git push
-
-# Restaurar el placeholder para el próximo deploy
-sed -i "s/nplayer-$BUILD/nplayer-__BUILDTIME__/" sw.js

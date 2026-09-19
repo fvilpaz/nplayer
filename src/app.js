@@ -13,6 +13,7 @@ let repeat = 'none';
 let shuffleOrder = [];
 let audio = new Audio();
 let dirHandle = null;
+let currentEntry = null;   // pista cargada: la lista se reordena mientras se leen subcarpetas y hay que reencontrarla
 
 // --- DOM ---
 const btnOpen      = document.getElementById('btn-open');
@@ -368,8 +369,11 @@ openDB().then(db => getDir(db)).then(async handle => {
     btnReconnect.style.display = 'none';
     return;
   }
+  // Android pide confirmar el acceso a la carpeta en cada sesión: un solo toque que además retoma la canción
   savedHandle = handle;
-  emptyMsg.textContent       = 'Pulsa Play para reanudar';
+  const last = savedTrackName();
+  emptyMsg.textContent       = last ? 'Toca para continuar donde lo dejaste' : 'Toca para reconectar tu música';
+  btnReconnect.textContent   = last ? `▶ Continuar: ${last}` : '▶ Abrir música';
   btnReconnect.style.display = 'block';
 }).catch(() => {});
 
@@ -380,7 +384,7 @@ dirInput.type = 'file';
 dirInput.webkitdirectory = true;
 dirInput.style.display = 'none';
 document.body.appendChild(dirInput);
-dirInput.addEventListener('change', () => {
+dirInput.addEventListener('change', async () => {
   files = [...dirInput.files]
     .filter(f => EXTS.some(ext => f.name.toLowerCase().endsWith(ext)))
     .map(f => {
@@ -388,14 +392,15 @@ dirInput.addEventListener('change', () => {
       parts.pop();
       return { name: f.name, _folder: parts.join('/') || 'Música', getFile: () => f };
     });
-  files.sort((a, b) => {
-    const fa = a._folder.localeCompare(b._folder, undefined, { numeric: true });
-    return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
-  });
+  currentIdx = -1;
+  currentEntry = null;
+  sortFiles();
   renderPlaylist();
   emptyState.style.display = files.length ? 'none' : 'flex';
   playlist.style.display   = files.length ? 'block' : 'none';
-  if (files.length) loadTrack(0);
+  if (!files.length) return;
+  if (await tryRestoreTrack(readSavedTrack())) audio.play().catch(() => {});
+  else loadTrack(0);
 });
 function openDirPickerFallback() {
   dirInput.value = '';
@@ -416,8 +421,10 @@ btnReconnect.addEventListener('click', async () => {
       savedHandle = handle;
     }
     btnReconnect.style.display = 'none';
-    await loadDirectory(handle);
-    if (files.length) loadTrack(0);
+    // Retoma la última canción en su segundo exacto; solo si no había ninguna guardada empieza por la primera
+    const restored = await loadDirectory(handle);
+    if (restored) audio.play().catch(() => {});
+    else if (files.length) loadTrack(0);
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
   }
@@ -469,12 +476,12 @@ audio.addEventListener('pause', () => {
   playlist.querySelector('li.active')?.classList.add('paused');
 });
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && currentIdx >= 0) {
-    localStorage.setItem('np_idx', currentIdx);
-    localStorage.setItem('np_pos', audio.currentTime);
-  }
-});
+// La pista se guarda en loadTrack; aquí solo el segundo exacto al salir
+function savePosition() {
+  if (currentEntry) localStorage.setItem('np_pos', audio.currentTime);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) savePosition(); });
+window.addEventListener('pagehide', savePosition);
 
 searchInput.addEventListener('input', () => {
   const q = searchInput.value.trim();
@@ -495,6 +502,42 @@ progressBar.addEventListener('input', () => {
 });
 
 // ─── CORE ─────────────────────────────────────────────────────
+// Identidad estable de una pista: carpeta + nombre (el índice cambia cada vez que se reordena la lista)
+const trackKey = f => `${f._folder}/${f.name}`;
+
+function sortFiles() {
+  files.sort((a, b) => {
+    const fa = a._folder.localeCompare(b._folder, undefined, { numeric: true });
+    return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
+  // Tras reordenar, la pista que suena está en otra posición: recolocar el índice
+  currentIdx = currentEntry ? files.indexOf(currentEntry) : -1;
+  if (shuffle) buildShuffleOrder();
+}
+
+function readSavedTrack() {
+  try {
+    const t = JSON.parse(localStorage.getItem('np_track') || 'null');
+    if (!t || !t.key) return null;
+    return { key: t.key, pos: parseFloat(localStorage.getItem('np_pos') ?? '0') || 0 };
+  } catch { return null; }
+}
+
+// Nombre legible de la última pista (para el botón «Continuar»)
+function savedTrackName() {
+  const t = readSavedTrack();
+  return t ? t.key.split('/').pop().replace(/\.[^.]+$/, '') : '';
+}
+
+// Carga la pista guardada (sin reproducir) y la coloca en el segundo donde se dejó
+async function tryRestoreTrack(saved) {
+  if (!saved) return false;
+  const idx = files.findIndex(f => trackKey(f) === saved.key);
+  if (idx === -1) return false;
+  await loadTrack(idx, false, saved.pos);
+  return true;
+}
+
 async function scanDir(handle, path = '') {
   const results = [];
   for await (const entry of handle.values()) {
@@ -509,16 +552,18 @@ async function scanDir(handle, path = '') {
   return results;
 }
 
+// Devuelve true si ha recuperado la última pista guardada
 async function loadDirectory(handle) {
   dirHandle = handle;
   files = [];
+  currentIdx = -1;
+  currentEntry = null;
   emptyState.style.display = 'none';
   playlist.style.display   = 'block';
   playlist.innerHTML = '<li style="color:var(--text-dim);padding:12px;font-size:0.85rem">Cargando música...</li>';
 
-  const lastIdx = parseInt(localStorage.getItem('np_idx') ?? '-1');
-  const lastPos = parseFloat(localStorage.getItem('np_pos') ?? '0');
-  let trackLoaded = false;
+  const saved = readSavedTrack();
+  let restored = false;
 
   for await (const entry of handle.values()) {
     if (entry.kind === 'file' && EXTS.some(ext => entry.name.toLowerCase().endsWith(ext))) {
@@ -526,30 +571,17 @@ async function loadDirectory(handle) {
       files.push(entry);
     }
   }
-  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  sortFiles();
   renderPlaylist();
-
-  if (!trackLoaded && lastIdx >= 0 && lastIdx < files.length) {
-    trackLoaded = true;
-    await loadTrack(lastIdx, false);
-    audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
-  }
+  restored = await tryRestoreTrack(saved);
 
   for await (const entry of handle.values()) {
     if (entry.kind === 'directory') {
       const sub = await scanDir(entry, entry.name);
       files.push(...sub);
-      files.sort((a, b) => {
-        const fa = a._folder.localeCompare(b._folder);
-        return fa !== 0 ? fa : a.name.localeCompare(b.name, undefined, { numeric: true });
-      });
+      sortFiles();          // mantiene currentIdx apuntando a la pista que suena
       renderPlaylist();
-      if (shuffle) buildShuffleOrder();
-      if (!trackLoaded && lastIdx >= 0 && lastIdx < files.length) {
-        trackLoaded = true;
-        await loadTrack(lastIdx, false);
-        audio.addEventListener('loadedmetadata', () => { audio.currentTime = lastPos; }, { once: true });
-      }
+      if (!restored) restored = await tryRestoreTrack(saved);
     }
   }
 
@@ -557,19 +589,25 @@ async function loadDirectory(handle) {
     emptyState.style.display = 'flex';
     playlist.style.display   = 'none';
   }
+  return restored;
 }
 
-async function loadTrack(idx, autoplay = true) {
-  currentIdx = idx;
+async function loadTrack(idx, autoplay = true, startPos = 0) {
   const entry = files[idx];
+  currentIdx   = idx;
+  currentEntry = entry;
   const file  = await entry.getFile();
   const url   = URL.createObjectURL(file);
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = url;
+  if (startPos > 0) {
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = startPos; }, { once: true });
+  }
   audio.load();
   document.title = `${entry.name.replace(/\.[^.]+$/, '')} — Nando Player`;
-  highlightPlaylistItem(idx);
-  localStorage.setItem('np_idx', idx);
+  highlightPlaylistItem(currentIdx);
+  localStorage.setItem('np_track', JSON.stringify({ key: trackKey(entry) }));
+  localStorage.setItem('np_pos', startPos);   // no arrastrar la posición de la pista anterior
   if (autoplay) audio.play();
 }
 
@@ -621,13 +659,18 @@ function buildShuffleOrder() {
 }
 
 // ─── UI ───────────────────────────────────────────────────────
+let lastPosSave = 0;
 function onTimeUpdate() {
   if (!audio.duration) return;
   const pct = (audio.currentTime / audio.duration) * 100;
   setProgressPct(pct);
   timeCurrent.textContent = fmt(audio.currentTime);
   timeTotal.textContent   = fmt(audio.duration);
-  localStorage.setItem('np_pos', audio.currentTime);
+  const now = Date.now();
+  if (now - lastPosSave > 2000) {           // timeupdate llega ~4 veces por segundo
+    localStorage.setItem('np_pos', audio.currentTime);
+    lastPosSave = now;
+  }
 }
 
 function setProgressPct(pct) {
@@ -648,16 +691,27 @@ function renderPlaylist() {
       lastFolder = f._folder;
       const sep = document.createElement('li');
       sep.className = 'folder-sep';
-      sep.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg> ${f._folder}`;
+      sep.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg> ';
+      sep.appendChild(document.createTextNode(f._folder));   // texto, no HTML: un nombre con < o & no se interpreta
       playlist.appendChild(sep);
     }
     const li = document.createElement('li');
-    li.innerHTML = `
-      <span class="num">${i + 1}</span>
-      <span class="name">${f.name.replace(/\.[^.]+$/, '')}</span>
-      <span class="eq"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></span>`;
+    li.dataset.idx = i;            // índice real en `files` (las filas separadoras también son <li>)
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = i + 1;
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = f.name.replace(/\.[^.]+$/, '');
+    const eq = document.createElement('span');
+    eq.className = 'eq';
+    eq.innerHTML = '<span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>';
+    li.append(num, name, eq);
     li.addEventListener('click', () => loadTrack(i));
-    if (i === currentIdx) li.classList.add('active');
+    if (i === currentIdx) {
+      li.classList.add('active');
+      if (audio.paused) li.classList.add('paused');
+    }
     playlist.appendChild(li);
   });
 }
@@ -679,8 +733,13 @@ function filterPlaylist(q) {
 }
 
 function highlightPlaylistItem(idx) {
-  playlist.querySelectorAll('li').forEach((li, i) => li.classList.toggle('active', i === idx));
-  playlist.children[idx]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  let active = null;
+  playlist.querySelectorAll('li[data-idx]').forEach(li => {
+    const on = Number(li.dataset.idx) === idx;
+    li.classList.toggle('active', on);
+    if (on) active = li;
+  });
+  active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 // ─── INDEXEDDB ────────────────────────────────────────────────

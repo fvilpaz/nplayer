@@ -1,4 +1,4 @@
-const CACHE = 'nplayer-20260908041555';
+const CACHE = 'nplayer-20260919223803';
 const BASE = self.registration.scope;
 const ASSETS = ['', 'index.html', 'manifest.json', 'src/app.js', 'src/style.css', 'assets/icon.png', 'assets/nando_1.png'].map(f => BASE + f);
 
@@ -17,8 +17,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Red primero siempre (evita versiones viejas en caché); caché solo si no hay red
+  // Red primero siempre (evita versiones viejas en caché); caché solo si no hay red.
+  // cache:'no-cache' obliga a revalidar con el servidor: sin él, GitHub Pages sirve el JS/CSS viejo hasta 10 min
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    fetch(e.request, { cache: 'no-cache' }).catch(() => caches.match(e.request))
   );
 });

@@ -469,6 +469,11 @@ header h1 {
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
+  /* el botón lleva el nombre de la canción: que no se salga de la pantalla */
+  max-width: 88%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #empty {
