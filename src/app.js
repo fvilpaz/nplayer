@@ -632,8 +632,10 @@ async function loadDirectory(handle) {
   return restored;
 }
 
+let loadSeq = 0;   // cada carga lleva su número: si llega tarde una anterior (toques rápidos en «siguiente») se descarta
 async function loadTrack(idx, autoplay = true, startPos = 0) {
   const entry = files[idx];
+  const seq    = ++loadSeq;
   currentIdx   = idx;
   currentEntry = entry;
   wantPlay     = autoplay;
@@ -641,10 +643,12 @@ async function loadTrack(idx, autoplay = true, startPos = 0) {
   try {
     file = await entry.getFile();
   } catch (e) {
+    if (seq !== loadSeq) return;
     console.error('No se puede leer', entry.name, e);
     skipBroken(autoplay);
     return;
   }
+  if (seq !== loadSeq) return;
   const url   = URL.createObjectURL(file);
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = url;
