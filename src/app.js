@@ -331,7 +331,13 @@ artInput.addEventListener('change', () => {
   reader.onload = e => {
     trackArt.src = e.target.result;
     bgBlur.style.backgroundImage = `url('${e.target.result}')`;
-    localStorage.setItem('np_art', e.target.result);
+    try {
+      localStorage.setItem('np_art', e.target.result);
+    } catch (err) {
+      // Imagen demasiado grande para localStorage (~5 MB): se ve en esta sesión pero no se recordará
+      console.warn('Carátula no guardada (cuota de localStorage)', err);
+      localStorage.removeItem('np_art');   // no dejar la carátula anterior como si fuera la actual
+    }
   };
   reader.readAsDataURL(file);
 });
