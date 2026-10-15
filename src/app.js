@@ -636,7 +636,15 @@ async function loadTrack(idx, autoplay = true, startPos = 0) {
   const entry = files[idx];
   currentIdx   = idx;
   currentEntry = entry;
-  const file  = await entry.getFile();
+  wantPlay     = autoplay;
+  let file;
+  try {
+    file = await entry.getFile();
+  } catch (e) {
+    console.error('No se puede leer', entry.name, e);
+    skipBroken(autoplay);
+    return;
+  }
   const url   = URL.createObjectURL(file);
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = url;
@@ -679,6 +687,18 @@ if ('mediaSession' in navigator) {
     try { ms.setActionHandler(action, fn); } catch {}
   }
 }
+
+// Pista ilegible o corrupta: pasar a la siguiente en vez de quedarse mudo (tope para no dar vueltas sin fin)
+let brokenStreak = 0;
+function skipBroken(autoplay) {
+  brokenStreak++;
+  if (!autoplay || brokenStreak >= Math.min(files.length, 5)) return;
+  const idx = nextIdx();
+  if (idx !== -1) loadTrack(idx);
+}
+let wantPlay = false;   // lo fija loadTrack: al restaurar la pista guardada no se debe arrancar sola
+audio.addEventListener('error', () => { if (currentEntry) skipBroken(wantPlay); });
+audio.addEventListener('playing', () => { brokenStreak = 0; });
 
 function togglePlay() {
   if (!files.length) return;
