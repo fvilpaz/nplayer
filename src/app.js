@@ -382,8 +382,18 @@ function applyLight() {
 // ─── SERVICE WORKER ───────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+  // No cortar la música: si está sonando, la recarga espera a la siguiente pausa
   navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'SW_UPDATED') window.location.reload();
+    if (e.data?.type !== 'SW_UPDATED') return;
+    if (audio.paused) window.location.reload();
+    else {
+      // 'pause' también salta al acabar cada pista: solo recarga si 3 s después sigue pausado de verdad
+      const onPause = () => setTimeout(() => {
+        if (audio.paused) window.location.reload();
+        else audio.addEventListener('pause', onPause, { once: true });
+      }, 3000);
+      audio.addEventListener('pause', onPause, { once: true });
+    }
   });
 }
 
