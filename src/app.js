@@ -536,6 +536,7 @@ searchClear.addEventListener('click', () => {
 });
 
 progressBar.addEventListener('input', () => {
+  if (!Number.isFinite(audio.duration)) return;   // pista aún cargando: duration es NaN y currentTime = NaN lanza TypeError
   const pct = progressBar.value / 100;
   audio.currentTime = audio.duration * pct;
   setProgressPct(progressBar.value);
