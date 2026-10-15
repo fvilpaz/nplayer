@@ -271,11 +271,34 @@ window.addEventListener('resize', () => {
 // Swipe en foto y canvas — rueda: foto → anim0 → anim1 → anim2 → anim3 → foto → ...
 let swipeStartX = null;
 
+// Doble toque como en YouTube: mitad derecha +5 s, mitad izquierda −5 s
+const SKIP_SECONDS = 5;
+let lastTapTime = 0, lastTapSide = 0;
+
+function skipBy(sec) {
+  if (!audio.duration) return;
+  audio.currentTime = Math.min(audio.duration, Math.max(0, audio.currentTime + sec));
+}
+
+function onTap(x, target) {
+  if (target.closest && target.closest('#art-overlay')) return;   // botón de cambiar carátula
+  const r    = artContainer.getBoundingClientRect();
+  const side = x < r.left + r.width / 2 ? -1 : 1;
+  const now  = Date.now();
+  if (now - lastTapTime < 350 && side === lastTapSide) {
+    skipBy(side * SKIP_SECONDS);
+    lastTapTime = 0;
+  } else {
+    lastTapTime = now;
+    lastTapSide = side;
+  }
+}
+
 function onSwipeStart(x) { swipeStartX = x; }
-function onSwipeEnd(x) {
+function onSwipeEnd(x, target) {
   if (swipeStartX === null) return;
   const diff = x - swipeStartX;
-  if (Math.abs(diff) < 40) { swipeStartX = null; return; }
+  if (Math.abs(diff) < 40) { swipeStartX = null; if (target) onTap(x, target); return; }
   const dir  = diff < 0 ? 1 : -1;
   let next   = currentPage + dir;
   if (next > VIZ_MODES - 1) next = -1;
@@ -287,9 +310,9 @@ function onSwipeEnd(x) {
 [artContainer, canvas].forEach(el => {
   el.addEventListener('touchstart', e => onSwipeStart(e.touches[0].clientX), { passive: true });
   el.addEventListener('touchmove',  e => e.preventDefault(), { passive: false });
-  el.addEventListener('touchend',   e => onSwipeEnd(e.changedTouches[0].clientX));
+  el.addEventListener('touchend',   e => onSwipeEnd(e.changedTouches[0].clientX, e.target));
   el.addEventListener('mousedown',  e => { e.preventDefault(); onSwipeStart(e.clientX); });
-  el.addEventListener('mouseup',    e => onSwipeEnd(e.clientX));
+  el.addEventListener('mouseup',    e => onSwipeEnd(e.clientX, e.target));
 });
 
 // ─── CUSTOM ART ───────────────────────────────────────────────
@@ -638,6 +661,8 @@ if ('mediaSession' in navigator) {
     pause:         () => audio.pause(),
     nexttrack:     () => playNext(),
     previoustrack: () => playPrev(),
+    seekbackward:  () => skipBy(-SKIP_SECONDS),
+    seekforward:   () => skipBy(SKIP_SECONDS),
     seekto:        d  => { if (d.seekTime != null) audio.currentTime = d.seekTime; }
   };
   for (const [action, fn] of Object.entries(handlers)) {
