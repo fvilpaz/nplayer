@@ -69,6 +69,10 @@ function initAudioCtx() {
   source = audioCtx.createMediaElementSource(audio);
   source.connect(analyser);
   analyser.connect(audioCtx.destination);
+  // Android suspende el contexto con la pantalla apagada: si la pista sigue "sonando", lo reanudamos
+  audioCtx.addEventListener('statechange', () => {
+    if (audioCtx.state !== 'running' && !audio.paused) audioCtx.resume().catch(() => {});
+  });
 }
 
 // --- Modos de dibujo ---
@@ -463,6 +467,8 @@ audio.addEventListener('timeupdate', onTimeUpdate);
 audio.addEventListener('ended', onEnded);
 
 audio.addEventListener('play', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
   iconPlay.style.display  = 'none';
   iconPause.style.display = 'block';
   trackArt.classList.add('playing');
@@ -470,6 +476,7 @@ audio.addEventListener('play', () => {
 });
 
 audio.addEventListener('pause', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
   iconPlay.style.display  = 'block';
   iconPause.style.display = 'none';
   trackArt.classList.remove('playing');
@@ -608,7 +615,34 @@ async function loadTrack(idx, autoplay = true, startPos = 0) {
   highlightPlaylistItem(currentIdx);
   localStorage.setItem('np_track', JSON.stringify({ key: trackKey(entry) }));
   localStorage.setItem('np_pos', startPos);   // no arrastrar la posición de la pista anterior
-  if (autoplay) audio.play();
+  updateMediaSession(entry);
+  if (autoplay) audio.play().catch(() => {});
+}
+
+// ─── MEDIA SESSION ────────────────────────────────────────────
+// Le dice a Android "esto es un reproductor": notificación, botones de auriculares y prioridad en segundo plano
+function updateMediaSession(entry) {
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title:  entry.name.replace(/\.[^.]+$/, ''),
+    artist: entry._folder || 'Nando Player',
+    album:  'Nando Player',
+    artwork: [{ src: 'assets/icon.png', sizes: '512x512', type: 'image/png' }]
+  });
+}
+
+if ('mediaSession' in navigator) {
+  const ms = navigator.mediaSession;
+  const handlers = {
+    play:          () => audio.play().catch(() => {}),
+    pause:         () => audio.pause(),
+    nexttrack:     () => playNext(),
+    previoustrack: () => playPrev(),
+    seekto:        d  => { if (d.seekTime != null) audio.currentTime = d.seekTime; }
+  };
+  for (const [action, fn] of Object.entries(handlers)) {
+    try { ms.setActionHandler(action, fn); } catch {}
+  }
 }
 
 function togglePlay() {
