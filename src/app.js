@@ -755,7 +755,15 @@ function prevIdx() {
 }
 
 function buildShuffleOrder() {
-  shuffleOrder = [...Array(files.length).keys()].sort(() => Math.random() - 0.5);
+  const order = [...Array(files.length).keys()];
+  for (let i = order.length - 1; i > 0; i--) {   // Fisher-Yates: sort(random) no baraja uniformemente
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  // La pista que suena va primera: «siguiente» no la repite y «anterior» no salta a un sitio al azar
+  const pos = order.indexOf(currentIdx);
+  if (pos > 0) { order.splice(pos, 1); order.unshift(currentIdx); }
+  shuffleOrder = order;
 }
 
 // ─── UI ───────────────────────────────────────────────────────
